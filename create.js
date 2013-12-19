@@ -31,9 +31,10 @@ var Create = function(opts) {
 
 	this._sink = new Sink(this);
 	this._drain = noop;
-	this._piping = false;
 	this._finalized = false;
 	this._shouldFinalize = false;
+	this._destroyed = false;
+	this._stream = null;
 };
 
 util.inherits(Create, stream.Readable);
@@ -59,22 +60,22 @@ Create.prototype.entry = function(header, stream, callback) {
 		return;
 	}
 
-	if (this._piping) throw new Error('already piping an entry');
-	this._piping = true;
+	if (this._stream) throw new Error('already piping an entry');
 
 	this.push(headers.encode(header));
+	this._stream = stream;
+
 	stream.pipe(this._sink, {end:false});
 	eos(stream, function(err) {
-		self._piping = false;
-		if (err) return callback(err);
+		self._stream = null;
 		overflow(self, header.size);
 		if (self._shouldFinalize) self.finalize();
-		callback();
+		callback(err);
 	});
 };
 
 Create.prototype.finalize = function() {
-	if (this._piping) {
+	if (this._stream) {
 		this._shouldFinalize = true;
 		return;
 	}
@@ -83,6 +84,13 @@ Create.prototype.finalize = function() {
 	this._finalized = true;
 	this.push(END_OF_TAR);
 	this.push(null);
+};
+
+Create.prototype.destroy = function() {
+	if (this._destroyed) return;
+	this._destroyed = true;
+	this.emit('close');
+	if (this._stream && this._stream.destroy) this._stream.destroy();
 };
 
 Create.prototype._read = function(n) {
