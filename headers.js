@@ -70,7 +70,7 @@ var decodeStr = function(val, offset) {
 
 exports.encode = function(opts) {
 	var buf = alloc(512);
-	var name = opts.path;
+	var name = opts.name;
 	var prefix = '';
 
 	if (opts.typeflag === 5 && name[name.length-1] !== '/') name += '/';
@@ -122,7 +122,7 @@ exports.decode = function(buf) {
 	if (cksum(buf) !== decodeOct(buf, 148)) return null;
 
 	return {
-		path: name,
+		name: name,
 		mode: mode,
 		uid: uid,
 		gid: gid,
