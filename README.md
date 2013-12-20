@@ -56,6 +56,26 @@ extract.on('finish', function() {
 pack.pipe(extract);
 ```
 
+## Headers
+
+The header object using in `entry` should contain the following properties.
+Most of these values can be found by stating a file.
+
+``` js
+{
+	name: 'path/to/this/entry.txt',
+	size: 1314,        // entry size. defaults to 0
+	mode: 0644,        // entry mode. defaults to to 0755 for dirs and 0644 otherwise
+	mtime: new Date(), // last modified date for entry
+	type: 'file',      // type of entry. can be file|directory|link|block|character|fifo
+	linkname: 'path',  //
+	uid: 0,            // uid of entry owner. defaults to 0
+	gid: 0,            // gid of entry owner. defaults to 0
+	uname: 'maf',      // uname of entry owner. defaults to null
+	gname: 'wheel',    // gname of entry owner. defaults to null
+}
+```
+
 ## Modifying existing tarballs
 
 Using tar-stream it is easy to rewrite paths / change modes etc in an existing tarball.
@@ -82,26 +102,6 @@ oldTarball.pipe(extract);
 
 // pipe the new tarball the another stream
 pack.pipe(newTarball);
-```
-
-## Headers
-
-The header object using in `entry` should contain the following properties.
-Most of these values can be found by stating a file.
-
-``` js
-{
-	name: 'path/to/this/entry.txt',
-	size: 1314,        // entry size. defaults to 0
-	mode: 0644,        // entry mode. defaults to to 0755 for dirs and 0644 otherwise
-	mtime: new Date(), // last modified date for entry
-	type: 'file',      // type of entry. can be file|directory|link|block|character|fifo
-	linkname: 'path',  //
-	uid: 0,            // uid of entry owner. defaults to 0
-	gid: 0,            // gid of entry owner. defaults to 0
-	uname: 'maf',      // uname of entry owner. defaults to null
-	gname: 'wheel',    // gname of entry owner. defaults to null
-}
 ```
 
 # License
