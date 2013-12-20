@@ -95,8 +95,8 @@ exports.encode = function(opts) {
 	buf.write(USTAR, 257);
 	if (opts.uname) buf.write(opts.uname, 265);
 	if (opts.gname) buf.write(opts.gname, 297);
-	buf.write(encodeOct(0, 6), 329);
-	buf.write(encodeOct(0, 6), 337);
+	buf.write(encodeOct(opts.devmajor || 0, 6), 329);
+	buf.write(encodeOct(opts.devminor || 0, 6), 337);
 
 	if (prefix) buf.write(prefix, 345);
 
@@ -116,6 +116,8 @@ exports.decode = function(buf) {
 	var linkname = buf[157] === 0 ? null : decodeStr(buf, 157);
 	var uname = decodeStr(buf, 265);
 	var gname = decodeStr(buf, 297);
+	var devmajor = decodeOct(buf, 329);
+	var devminor = decodeOct(buf, 337);
 
 	if (buf[345]) name = decodeStr(buf, 345)+'/'+name;
 
@@ -131,6 +133,8 @@ exports.decode = function(buf) {
 		type: toType(typeflag),
 		linkname: linkname,
 		uname: uname,
-		gname: gname
+		gname: gname,
+		devmajor: devmajor,
+		devminor: devminor
 	};
 };

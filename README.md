@@ -72,6 +72,8 @@ Most of these values can be found by stating a file.
 	gid: 0,            // gid of entry owner. defaults to 0
 	uname: 'maf',      // uname of entry owner. defaults to null
 	gname: 'staff',    // gname of entry owner. defaults to null
+	devmajor: 0,       // device major version. defaults to 0
+	devminor: 0        // device minor version. defaults to 0
 }
 ```
 
