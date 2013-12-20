@@ -1,12 +1,12 @@
 # tar-stream
 
-tar-stream is a streaming tar parser and generator and nothing else. It is streams2 and operates purely using streams which means easily you can extract/parse tarballs without ever hitting the file system. 
+tar-stream is a streaming tar parser and generator and nothing else. It is streams2 and operates purely using streams which means you can easily extract/parse tarballs without ever hitting the file system.
 
 	npm install tar-stream
 
 # Usage
 
-tar-stream exposes two streams, `pack` and `extract`. `pack` will create a tarball and `extract` will extract it.
+tar-stream exposes two streams, [pack](https://github.com/mafintosh/tar-stream#packing) which creates tarballs and [extract](https://github.com/mafintosh/tar-stream#extracting) which extracts tarballs. To [modify](https://github.com/mafintosh/tar-stream#modifying-existing-tarballs an existing tarball) use both.
 
 ## Packing
 
