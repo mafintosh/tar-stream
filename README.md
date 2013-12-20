@@ -6,7 +6,7 @@ tar-stream is a streaming tar parser and generator and nothing else. It is strea
 
 # Usage
 
-tar-stream exposes two streams, [pack](https://github.com/mafintosh/tar-stream#packing) which creates tarballs and [extract](https://github.com/mafintosh/tar-stream#extracting) which extracts tarballs. To [modify](https://github.com/mafintosh/tar-stream#modifying-existing-tarballs an existing tarball) use both.
+tar-stream exposes two streams, [pack](https://github.com/mafintosh/tar-stream#packing) which creates tarballs and [extract](https://github.com/mafintosh/tar-stream#extracting) which extracts tarballs. To [modify an existing tarball](https://github.com/mafintosh/tar-stream#modifying-existing-tarballs) use both.
 
 ## Packing
 
