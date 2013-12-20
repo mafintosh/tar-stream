@@ -28,6 +28,7 @@ var Extract = function(opts) {
 	this._overflow = null;
 	this._cb = null;
 	this._locked = false;
+	this._destroyed = false;
 
 	var self = this;
 	var b = self._buffer;
@@ -38,7 +39,10 @@ var Extract = function(opts) {
 
 	var onunlock = function(err) {
 		self._locked = false;
-		if (err) return self.emit('error', err);
+		if (err) {
+			self.emit('error', err);
+			return self.destroy();
+		}
 		if (!self._stream) oncontinue();
 	};
 
@@ -65,13 +69,15 @@ var Extract = function(opts) {
 			oncontinue();
 			return;
 		}
+
+		self._locked = true;
+
 		if (!header.size) {
 			self._parse(512, onheader);
-			self.emit('entry', header, emptyStream(), oncontinue);
+			self.emit('entry', header, emptyStream(), onunlock);
 			return;
 		}
 
-		self._locked = true;
 		self._stream = new stream.PassThrough();
 
 		self.emit('entry', header, self._stream, onunlock);
@@ -84,12 +90,21 @@ var Extract = function(opts) {
 
 util.inherits(Extract, stream.Writable);
 
+Extract.prototype.destroy = function() {
+	if (this._destroyed) return;
+	this._destroyed = true;
+	this.emit('close');
+	if (this._stream) this._stream.emit('close');
+};
+
 Extract.prototype._parse = function(size, onparse) {
+	if (this._destroyed) return;
 	this._missing = size;
 	this._onparse = onparse;
 };
 
 Extract.prototype._continue = function(err) {
+	if (this._destroyed) return;
 	var cb = this._cb;
 	this._cb = noop;
 	if (this._overflow) this._write(this._overflow, undefined, cb);
@@ -97,6 +112,8 @@ Extract.prototype._continue = function(err) {
 };
 
 Extract.prototype._write = function(data, enc, cb) {
+	if (this._destroyed) return;
+
 	var s = this._stream;
 	var b = this._buffer;
 	var missing = this._missing;
