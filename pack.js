@@ -15,6 +15,7 @@ var overflow = function(self, size) {
 
 var Sink = function(to) {
 	stream.Writable.call(this);
+	this.written = 0;
 	this._to = to;
 	this._destroyed = false;
 };
@@ -22,6 +23,7 @@ var Sink = function(to) {
 util.inherits(Sink, stream.Writable);
 
 Sink.prototype._write = function(data, enc, cb) {
+	this.written += data.length;
 	if (this._to.push(data)) return cb();
 	this._to._drain = cb;
 };
@@ -38,7 +40,7 @@ var Pack = function(opts) {
 
 	this._drain = noop;
 	this._finalized = false;
-	this._shouldFinalize = false;
+	this._finalizing = false;
 	this._destroyed = false;
 	this._stream = null;
 };
@@ -46,13 +48,15 @@ var Pack = function(opts) {
 util.inherits(Pack, stream.Readable);
 
 Pack.prototype.entry = function(header, buffer, callback) {
+	if (this._stream) throw new Error('already piping an entry');
+	if (this._finalized || this._destroyed) return;
+
 	if (typeof buffer === 'function') {
 		callback = buffer;
 		buffer = null;
 	}
 
 	if (!callback) callback = noop;
-	if (this._stream) throw new Error('already piping an entry');
 
 	var self = this;
 
@@ -80,10 +84,20 @@ Pack.prototype.entry = function(header, buffer, callback) {
 
 	eos(sink, function(err) {
 		self._stream = null;
+
+		if (err) { // stream was closed
+			self.destroy();
+			return callback(err);
+		}
+
+		if (sink.written !== header.size) { // corrupting tar
+			self.destroy();
+			return callback(new Error('size mismatch'));
+		}
+
 		overflow(self, header.size);
-		if (self._shouldFinalize) self.finalize();
-		if (err) self.destroy();
-		callback(err);
+		if (self._finalizing) self.finalize();
+		callback();
 	});
 
 	return sink;
@@ -91,7 +105,7 @@ Pack.prototype.entry = function(header, buffer, callback) {
 
 Pack.prototype.finalize = function() {
 	if (this._stream) {
-		this._shouldFinalize = true;
+		this._finalizing = true;
 		return;
 	}
 
