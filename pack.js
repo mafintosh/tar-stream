@@ -16,6 +16,7 @@ var overflow = function(self, size) {
 var Sink = function(to) {
 	stream.Writable.call(this);
 	this._to = to;
+	this._destroyed = false;
 };
 
 util.inherits(Sink, stream.Writable);
@@ -25,11 +26,16 @@ Sink.prototype._write = function(data, enc, cb) {
 	this._to._drain = cb;
 };
 
+Sink.prototype.destroy = function() {
+	if (this._destroyed) return;
+	this._destroyed = true;
+	this.emit('close');
+};
+
 var Pack = function(opts) {
 	if (!(this instanceof Pack)) return new Pack(opts);
 	stream.Readable.call(this, opts);
 
-	this._sink = new Sink(this);
 	this._drain = noop;
 	this._finalized = false;
 	this._shouldFinalize = false;
@@ -39,39 +45,48 @@ var Pack = function(opts) {
 
 util.inherits(Pack, stream.Readable);
 
-Pack.prototype.entry = function(header, stream, callback) {
+Pack.prototype.entry = function(header, buffer, callback) {
+	if (typeof buffer === 'function') {
+		callback = buffer;
+		buffer = null;
+	}
+
 	if (!callback) callback = noop;
+	if (this._stream) throw new Error('already piping an entry');
+
 	var self = this;
 
 	if (!header.size)  header.size = 0;
 	if (!header.type)  header.type = 'file';
-	if (!header.mode)  header.mode = header.type === 'file' ? 420 : 493;
+	if (!header.mode)  header.mode = header.type === 'directory' ? 0755 : 0644;
 	if (!header.uid)   header.uid = 0;
 	if (!header.gid)   header.gid = 0;
 	if (!header.mtime) header.mtime = new Date();
 
-	if (typeof stream === 'string') stream = new Buffer(stream);
-	if (Buffer.isBuffer(stream)) {
-		header.size = stream.length;
+	if (typeof buffer === 'string') buffer = new Buffer(buffer);
+	if (Buffer.isBuffer(buffer)) {
+		header.size = buffer.length;
 		this.push(headers.encode(header));
-		this.push(stream);
+		this.push(buffer);
 		overflow(self, header.size);
 		process.nextTick(callback);
 		return;
 	}
 
-	if (this._stream) throw new Error('already piping an entry');
-
 	this.push(headers.encode(header));
 	this._stream = stream;
 
-	stream.pipe(this._sink, {end:false});
-	eos(stream, function(err) {
+	var sink = new Sink(this);
+
+	eos(sink, function(err) {
 		self._stream = null;
 		overflow(self, header.size);
 		if (self._shouldFinalize) self.finalize();
+		if (err) self.destroy();
 		callback(err);
 	});
+
+	return sink;
 };
 
 Pack.prototype.finalize = function() {
