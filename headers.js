@@ -55,7 +55,7 @@ var cksum = function(block) {
 	return sum;
 };
 
-var oct = function(val, n) {
+var encodeOct = function(val, n) {
 	val = val.toString(8);
 	return ZEROS.slice(0, n-val.length)+val+' ';
 };
@@ -82,11 +82,11 @@ exports.encode = function(opts) {
 	}
 
 	buf.write(name);
-	buf.write(oct(opts.mode, 6), 100);
-	buf.write(oct(opts.uid, 6), 108);
-	buf.write(oct(opts.gid, 6), 116);
-	buf.write(oct(opts.size, 11), 124);
-	buf.write(oct((opts.mtime.getTime() / 1000) | 0, 11), 136);
+	buf.write(encodeOct(opts.mode, 6), 100);
+	buf.write(encodeOct(opts.uid, 6), 108);
+	buf.write(encodeOct(opts.gid, 6), 116);
+	buf.write(encodeOct(opts.size, 11), 124);
+	buf.write(encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136);
 
 	buf[156] = ZERO_OFFSET + toTypeflag(opts.type);
 
@@ -95,12 +95,12 @@ exports.encode = function(opts) {
 	buf.write(USTAR, 257);
 	if (opts.uname) buf.write(opts.uname, 265);
 	if (opts.gname) buf.write(opts.gname, 297);
-	buf.write(oct(0, 6), 329);
-	buf.write(oct(0, 6), 337);
+	buf.write(encodeOct(0, 6), 329);
+	buf.write(encodeOct(0, 6), 337);
 
 	if (prefix) buf.write(prefix, 345);
 
-	buf.write(oct(cksum(buf), 6), 148);
+	buf.write(encodeOct(cksum(buf), 6), 148);
 
 	return buf;
 };
