@@ -1,2 +1,2 @@
 exports.extract = require('./extract');
-exports.create = require('./create');
+exports.pack = require('./pack');

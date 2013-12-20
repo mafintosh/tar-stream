@@ -25,8 +25,8 @@ Sink.prototype._write = function(data, enc, cb) {
 	this._to._drain = cb;
 };
 
-var Create = function(opts) {
-	if (!(this instanceof Create)) return new Create(opts);
+var Pack = function(opts) {
+	if (!(this instanceof Pack)) return new Pack(opts);
 	stream.Readable.call(this, opts);
 
 	this._sink = new Sink(this);
@@ -37,9 +37,9 @@ var Create = function(opts) {
 	this._stream = null;
 };
 
-util.inherits(Create, stream.Readable);
+util.inherits(Pack, stream.Readable);
 
-Create.prototype.entry = function(header, stream, callback) {
+Pack.prototype.entry = function(header, stream, callback) {
 	if (!callback) callback = noop;
 	var self = this;
 
@@ -74,7 +74,7 @@ Create.prototype.entry = function(header, stream, callback) {
 	});
 };
 
-Create.prototype.finalize = function() {
+Pack.prototype.finalize = function() {
 	if (this._stream) {
 		this._shouldFinalize = true;
 		return;
@@ -86,17 +86,17 @@ Create.prototype.finalize = function() {
 	this.push(null);
 };
 
-Create.prototype.destroy = function() {
+Pack.prototype.destroy = function() {
 	if (this._destroyed) return;
 	this._destroyed = true;
 	this.emit('close');
 	if (this._stream && this._stream.destroy) this._stream.destroy();
 };
 
-Create.prototype._read = function(n) {
+Pack.prototype._read = function(n) {
 	var drain = this._drain;
 	this._drain = noop;
 	drain();
 };
 
-module.exports = Create;
+module.exports = Pack;
