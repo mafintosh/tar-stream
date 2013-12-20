@@ -1,6 +1,6 @@
 # tar-stream
 
-tar-stream is an alternative tar parser. It is streams2, does not have a fstream dependency and does not do any file io.
+tar-stream is a streaming tar parser and generator and nothing else. It is streams2 and operates purely using streams which means you can extract/parse tarballs without ever hitting the file system. 
 
 	npm install tar-stream
 
