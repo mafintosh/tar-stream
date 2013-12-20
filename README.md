@@ -22,10 +22,9 @@ pack.entry({ name: 'my-test.txt' }, 'Hello World!');
 // add a file called my-stream-test.txt from a stream
 myStream.pipe(pack.entry({ name: 'my-stream-test.txt' }, function(err) {
 	// the stream was added
+	// no more entries
+	pack.finalize();
 }));
-
-// no more entries
-pack.finalize();
 
 // pipe the pack stream somewhere
 pack.pipe(process.stdout);
@@ -72,7 +71,7 @@ Most of these values can be found by stating a file.
 	uid: 0,            // uid of entry owner. defaults to 0
 	gid: 0,            // gid of entry owner. defaults to 0
 	uname: 'maf',      // uname of entry owner. defaults to null
-	gname: 'wheel',    // gname of entry owner. defaults to null
+	gname: 'staff',    // gname of entry owner. defaults to null
 }
 ```
 
