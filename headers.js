@@ -4,6 +4,8 @@ var USTAR = 'ustar00';
 
 var toType = function(flag) {
 	switch (flag) {
+		case 0:
+		return 'file';
 		case 1:
 		return 'link';
 		case 2:
@@ -19,11 +21,14 @@ var toType = function(flag) {
 		case 7:
 		return 'contiguous-file'
 	}
-	return 'file';
+
+	return null;
 };
 
 var toTypeflag = function(flag) {
 	switch (flag) {
+		case 'file':
+		return 0;
 		case 'link':
 		return 1;
 		case 'symlink':
@@ -114,13 +119,17 @@ exports.encode = function(opts) {
 };
 
 exports.decode = function(buf) {
+	var typeflag = buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET;
+	var type = toType(typeflag);
+
+	if (!type) return null;
+
 	var name = decodeStr(buf, 0);
 	var mode = decodeOct(buf, 100);
 	var uid = decodeOct(buf, 108);
 	var gid = decodeOct(buf, 116);
 	var size = decodeOct(buf, 124);
 	var mtime = decodeOct(buf, 136);
-	var typeflag = buf[156] - ZERO_OFFSET;
 	var linkname = buf[157] === 0 ? null : decodeStr(buf, 157);
 	var uname = decodeStr(buf, 265);
 	var gname = decodeStr(buf, 297);
