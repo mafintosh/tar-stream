@@ -90,7 +90,7 @@ exports.encode = function(opts) {
 	}
 
 	buf.write(name);
-	buf.write(encodeOct(opts.mode, 6), 100);
+	buf.write(encodeOct(opts.mode & 07777, 6), 100);
 	buf.write(encodeOct(opts.uid, 6), 108);
 	buf.write(encodeOct(opts.gid, 6), 116);
 	buf.write(encodeOct(opts.size, 11), 124);
