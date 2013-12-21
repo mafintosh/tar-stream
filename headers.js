@@ -6,14 +6,18 @@ var toType = function(flag) {
 	switch (flag) {
 		case 1:
 		return 'link';
+		case 2:
+		return 'symlink';
 		case 3:
-		return 'character';
+		return 'character-device';
 		case 4:
-		return 'block';
+		return 'block-device';
 		case 5:
 		return 'directory';
 		case 6:
 		return 'fifo';
+		case 7:
+		return 'contiguous-file'
 	}
 	return 'file';
 };
@@ -22,14 +26,18 @@ var toTypeflag = function(flag) {
 	switch (flag) {
 		case 'link':
 		return 1;
-		case 'character':
+		case 'symlink':
+		return 2;
+		case 'character-device':
 		return 3;
-		case 'block':
+		case 'block-device':
 		return 4;
 		case 'directory':
 		return 5;
 		case 'fifo':
 		return 6;
+		case 'contiguous-file':
+		return 7;
 	}
 
 	return 0;

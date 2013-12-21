@@ -65,9 +65,11 @@ Most of these values can be found by stating a file.
 	name: 'path/to/this/entry.txt',
 	size: 1314,        // entry size. defaults to 0
 	mode: 0644,        // entry mode. defaults to to 0755 for dirs and 0644 otherwise
-	mtime: new Date(), // last modified date for entry
-	type: 'file',      // type of entry. can be file|directory|link|block|character|fifo
-	linkname: 'path',  //
+	mtime: new Date(), // last modified date for entry. defaults to now.
+	type: 'file',      // type of entry. defaults to file. can be:
+	                   // file | link | symlink | directory | block-device
+	                   // character-device | fifo | contigious-file
+	linkname: 'path',  // linked file name
 	uid: 0,            // uid of entry owner. defaults to 0
 	gid: 0,            // gid of entry owner. defaults to 0
 	uname: 'maf',      // uname of entry owner. defaults to null
