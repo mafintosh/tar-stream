@@ -96,3 +96,26 @@ test('types', function(t) {
 	}));
 
 });
+
+test('long-name', function(t) {
+	t.plan(2);
+	var pack = tar.pack();
+
+	pack.entry({
+		name:'my/file/is/longer/than/100/characters/and/should/use/the/prefix/header/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/filename.txt',
+		mtime:new Date(1387580181000),
+		type:'file',
+		mode:0644,
+		uname:'maf',
+		gname:'staff',
+		uid:501,
+		gid:20
+	}, 'hello long name');
+
+	pack.finalize();
+
+	pack.pipe(concat(function(data) {
+		t.equal(data.length & 511, 0);
+		t.deepEqual(data, fs.readFileSync(fixtures.LONG_NAME_TAR));
+	}));
+});

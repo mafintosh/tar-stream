@@ -266,3 +266,40 @@ test('types', function(t) {
 
 	extract.end(fs.readFileSync(fixtures.TYPES_TAR));
 });
+
+test('long-name', function(t) {
+	t.plan(3);
+
+	var extract = tar.extract();
+	var noEntries = false;
+
+	extract.on('entry', function(header, stream, callback) {
+		t.deepEqual(header, {
+			name: 'my/file/is/longer/than/100/characters/and/should/use/the/prefix/header/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/filename.txt',
+			mode: 0644,
+			uid: 501,
+			gid: 20,
+			size: 15,
+			mtime: new Date(1387580181000),
+			type: 'file',
+			linkname: null,
+			uname: 'maf',
+			gname: 'staff',
+			devmajor: 0,
+			devminor: 0
+		});
+
+		stream.pipe(concat(function(data) {
+			noEntries = true;
+			t.same(data.toString(), 'hello long name');
+			callback();
+		}));
+	});
+
+	extract.on('finish', function() {
+		t.ok(noEntries);
+	});
+
+	extract.end(fs.readFileSync(fixtures.LONG_NAME_TAR));
+
+});
