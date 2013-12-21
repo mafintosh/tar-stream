@@ -22,11 +22,12 @@ var pack = tar.pack(); // p is a streams2 stream
 pack.entry({ name: 'my-test.txt' }, 'Hello World!');
 
 // add a file called my-stream-test.txt from a stream
-myStream.pipe(pack.entry({ name: 'my-stream-test.txt' }, function(err) {
+var entry = pack.entry({ name: 'my-stream-test.txt' }, function(err) {
 	// the stream was added
 	// no more entries
 	pack.finalize();
-}));
+});
+myStream.pipe(entry);
 
 // pipe the pack stream somewhere
 pack.pipe(process.stdout);
