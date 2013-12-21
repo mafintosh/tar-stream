@@ -4,3 +4,5 @@ exports.ONE_FILE_TAR = path.join(__dirname, 'one-file.tar');
 exports.MULTI_FILE_TAR = path.join(__dirname, 'multi-file.tar');
 exports.TYPES_TAR = path.join(__dirname, 'types.tar');
 exports.LONG_NAME_TAR = path.join(__dirname, 'long-name.tar');
+exports.UNICODE_BSD_TAR = path.join(__dirname, 'unicode-bsd.tar');
+exports.UNICODE_TAR = path.join(__dirname, 'unicode.tar');

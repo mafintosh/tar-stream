@@ -110,12 +110,35 @@ test('long-name', function(t) {
 		gname:'staff',
 		uid:501,
 		gid:20
-	}, 'hello long name');
+	}, 'hello long name\n');
 
 	pack.finalize();
 
 	pack.pipe(concat(function(data) {
 		t.equal(data.length & 511, 0);
 		t.deepEqual(data, fs.readFileSync(fixtures.LONG_NAME_TAR));
+	}));
+});
+
+test('unicode', function(t) {
+	t.plan(2);
+	var pack = tar.pack();
+
+	pack.entry({
+		name:'høstål.txt',
+		mtime:new Date(1387580181000),
+		type:'file',
+		mode:0644,
+		uname:'maf',
+		gname:'staff',
+		uid:501,
+		gid:20
+	}, 'høllø\n');
+
+	pack.finalize();
+
+	pack.pipe(concat(function(data) {
+		t.equal(data.length & 511, 0);
+		t.deepEqual(data, fs.readFileSync(fixtures.UNICODE_TAR));
 	}));
 });
