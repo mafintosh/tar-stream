@@ -13,7 +13,7 @@
     "concat-stream": "~1.2.1"
   },
   "scripts": {
-	"test": "tap test"
+	"test": "tap test/*.js"
   },
   "keywords": [
     "tar",
