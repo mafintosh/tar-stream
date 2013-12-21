@@ -120,9 +120,11 @@ Pack.prototype.finalize = function() {
 	this.push(null);
 };
 
-Pack.prototype.destroy = function() {
+Pack.prototype.destroy = function(err) {
 	if (this._destroyed) return;
 	this._destroyed = true;
+
+	if (err) this.emit('error', err);
 	this.emit('close');
 	if (this._stream && this._stream.destroy) this._stream.destroy();
 };

@@ -39,10 +39,7 @@ var Extract = function(opts) {
 
 	var onunlock = function(err) {
 		self._locked = false;
-		if (err) {
-			self.emit('error', err);
-			return self.destroy();
-		}
+		if (err) return self.destroy(err);
 		if (!self._stream) oncontinue();
 	};
 
@@ -90,9 +87,11 @@ var Extract = function(opts) {
 
 util.inherits(Extract, stream.Writable);
 
-Extract.prototype.destroy = function() {
+Extract.prototype.destroy = function(err) {
 	if (this._destroyed) return;
 	this._destroyed = true;
+
+	if (err) this.emit('error', err);
 	this.emit('close');
 	if (this._stream) this._stream.emit('close');
 };
