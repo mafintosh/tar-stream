@@ -76,6 +76,11 @@ Pack.prototype.entry = function(header, buffer, callback) {
 		process.nextTick(callback);
 		return;
 	}
+	if (header.type !== 'file' && header.type !== 'contigious-file') {
+		this.push(headers.encode(header));
+		process.nextTick(callback);
+		return;
+	}
 
 	this.push(headers.encode(header));
 	this._stream = stream;
