@@ -42,11 +42,11 @@ var extract = tar.extract();
 extract.on('entry', function(header, stream, callback) {
 	// header is the tar header
 	// stream is the content body (might be an empty stream)
-	// call callback when you are done with this entry
+	// call next when you are done with this entry
 
 	stream.resume(); // just auto drain the stream
 	stream.on('end', function() {
-		callback(); // ready for next entry
+		next(); // ready for next entry
 	});
 });
 
