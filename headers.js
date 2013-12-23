@@ -20,6 +20,8 @@ var toType = function(flag) {
 		return 'fifo';
 		case 7:
 		return 'contiguous-file'
+		case 72:
+		return 'pax-header';
 	}
 
 	return null;
@@ -43,6 +45,8 @@ var toTypeflag = function(flag) {
 		return 6;
 		case 'contiguous-file':
 		return 7;
+		case 'pax-header':
+		return 72;
 	}
 
 	return 0;
@@ -81,18 +85,58 @@ var decodeStr = function(val, offset) {
 	return val.slice(offset, indexOf(val, 0, offset)).toString();
 };
 
+var addLength = function(str) {
+	var len = Buffer.byteLength(str);
+	var digits = Math.floor(Math.log(len) / Math.log(10)) + 1;
+	if (len + digits > Math.pow(10, digits)) digits++;
+
+	return (len+digits)+str;
+};
+
+exports.encodePax = function(opts) { // TODO: encode more stuff in pax
+	var result = '';
+	if (opts.name) result += addLength(' path='+opts.name+'\n');
+	if (opts.linkname) result += addLength(' linkpath='+opts.linkname+'\n');
+	return new Buffer(result);
+};
+
+exports.decodePax = function(buf) {
+	var result = {};
+
+	while (buf.length) {
+		var i = 0;
+		for (; i < buf.length && buf[i] !== 32; i++);
+		var len = parseInt(buf.slice(0, i).toString());
+		if (!len) return result;
+
+		var b = buf.slice(i+1, len-1).toString();
+		var keyIndex = b.indexOf('=');
+		if (keyIndex === -1) return result;
+		result[b.slice(0, keyIndex)] = b.slice(keyIndex+1);
+
+		buf = buf.slice(len);
+	}
+
+	return result;
+};
+
 exports.encode = function(opts) {
 	var buf = alloc(512);
 	var name = opts.name;
 	var prefix = '';
 
 	if (opts.typeflag === 5 && name[name.length-1] !== '/') name += '/';
+	if (Buffer.byteLength(name) !== name.length) return null; // utf-8
 
 	while (Buffer.byteLength(name) > 100) {
 		var i = name.indexOf('/');
+		if (i === -1) return null;
 		prefix += prefix ? '/' + name.slice(0, i) : name.slice(0, i);
 		name = name.slice(i+1);
 	}
+
+	if (Buffer.byteLength(name) > 100 || Buffer.byteLength(prefix) > 155) return null;
+	if (opts.linkname && Buffer.byteLength(opts.linkname) > 100) return null;
 
 	buf.write(name);
 	buf.write(encodeOct(opts.mode & 07777, 6), 100);
