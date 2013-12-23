@@ -112,11 +112,10 @@ pack.pipe(newTarball);
 
 ## Performance
 
-Packing/extracting a 6.1 GB with 2496 directories and 2398 files yields the following results on my Macbook Air
+Packing and extracting a 6.1 GB with 2496 directories and 2398 files yields the following results on my Macbook Air
 
 * tar-stream (using [tar-fs](https://github.com/mafintosh/tar-fs)): 34.261 ms
 * [node-tar](https://github.com/isaacs/node-tar): 366.123 ms
-* native tar command: 47.241 ms (this one is a bit unfair as it is piping through processes)
 
 # License
 
