@@ -70,19 +70,19 @@ Pack.prototype.entry = function(header, buffer, callback) {
 	if (typeof buffer === 'string') buffer = new Buffer(buffer);
 	if (Buffer.isBuffer(buffer)) {
 		header.size = buffer.length;
-		this.push(headers.encode(header));
+		this._encode(header);
 		this.push(buffer);
 		overflow(self, header.size);
 		process.nextTick(callback);
 		return;
 	}
 	if (header.type !== 'file' && header.type !== 'contigious-file') {
-		this.push(headers.encode(header));
+		this._encode(header);
 		process.nextTick(callback);
 		return;
 	}
 
-	this.push(headers.encode(header));
+	this._encode(header);
 	this._stream = stream;
 
 	var sink = new Sink(this);
@@ -127,6 +127,42 @@ Pack.prototype.destroy = function(err) {
 	if (err) this.emit('error', err);
 	this.emit('close');
 	if (this._stream && this._stream.destroy) this._stream.destroy();
+};
+
+Pack.prototype._encode = function(header) {
+	var buf = headers.encode(header);
+	if (buf) this.push(buf);
+	else this._encodePax(header);
+};
+
+Pack.prototype._encodePax = function(header) {
+	var paxHeader = headers.encodePax({
+		name: header.name,
+		linkname: header.linkname
+	});
+
+	var newHeader = {
+		name: 'PaxHeader',
+		mode: header.mode,
+		uid: header.uid,
+		gid: header.gid,
+		size: paxHeader.length,
+		mtime: header.mtime,
+		type: 'pax-header',
+		linkname: header.linkname && 'PaxHeader',
+		uname: header.uname,
+		gname: header.gname,
+		devmajor: header.devmajor,
+		devminor: header.devminor
+	};
+
+	this.push(headers.encode(newHeader));
+	this.push(paxHeader);
+	overflow(this, paxHeader.length);
+
+	newHeader.size = header.size;
+	newHeader.type = header.type;
+	this.push(headers.encode(newHeader));
 };
 
 Pack.prototype._read = function(n) {

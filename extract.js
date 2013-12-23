@@ -16,6 +16,12 @@ var emptyStream = function() {
 	return s;
 };
 
+var mixinPax = function(header, pax) {
+	if (pax.path) header.name = pax.path;
+	if (pax.linkpath) header.linkname = pax.linkpath;
+	return header;
+};
+
 var Extract = function(opts) {
 	if (!(this instanceof Extract)) return new Extract(opts);
 	stream.Writable.call(this, opts);
@@ -29,6 +35,7 @@ var Extract = function(opts) {
 	this._cb = null;
 	this._locked = false;
 	this._destroyed = false;
+	this._pax = null;
 
 	var self = this;
 	var b = self._buffer;
@@ -57,6 +64,13 @@ var Extract = function(opts) {
 		oncontinue();
 	};
 
+	var onpaxheader = function() {
+		var size = self._header.size;
+		self._pax = headers.decodePax(b.slice(0, size));
+		b.consume(size);
+		onstreamend();
+	};
+
 	var onheader = function() {
 		var header = self._header = headers.decode(b.slice(0, 512));
 		b.consume(512);
@@ -65,6 +79,16 @@ var Extract = function(opts) {
 			self._parse(512, onheader);
 			oncontinue();
 			return;
+		}
+		if (header.type === 'pax-header') {
+			self._parse(header.size, onpaxheader);
+			oncontinue();
+			return;
+		}
+
+		if (self._pax) {
+			self._header = header = mixinPax(header, self._pax);
+			self._pax = null;
 		}
 
 		self._locked = true;
