@@ -3,8 +3,8 @@ var util = require('util');
 var eos = require('end-of-stream');
 var headers = require('./headers');
 
-var Readable = stream.Readable;
-var Writable = stream.Writable;
+var Readable = stream.Readable || require('readable-stream').Readable;
+var Writable = stream.Writable || require('readable-stream').Writable;
 
 var END_OF_TAR = new Buffer(1024);
 END_OF_TAR.fill(0);
