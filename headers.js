@@ -2,6 +2,16 @@ var ZEROS = '0000000000000000000';
 var ZERO_OFFSET = '0'.charCodeAt(0);
 var USTAR = 'ustar00';
 
+function clamp(index, len, defaultValue) {
+  if (typeof index !== 'number') return defaultValue;
+  index = ~~index;  // Coerce to integer.
+  if (index >= len) return len;
+  if (index >= 0) return index;
+  index += len;
+  if (index >= 0) return index;
+  return 0;
+}
+
 var toType = function(flag) {
 	switch (flag) {
 		case 0:
@@ -19,7 +29,7 @@ var toType = function(flag) {
 		case 6:
 		return 'fifo';
 		case 7:
-		return 'contiguous-file'
+		return 'contiguous-file';
 		case 72:
 		return 'pax-header';
 	}
@@ -78,7 +88,7 @@ var encodeOct = function(val, n) {
 };
 
 var decodeOct = function(val, offset) {
-	return parseInt(val.slice(offset, indexOf(val, 32, offset)).toString(), 8);
+	return parseInt(val.slice(offset, clamp(indexOf(val, 32, offset), val.length, val.length)).toString(), 8);
 };
 
 var decodeStr = function(val, offset) {

@@ -4,6 +4,16 @@ var fixtures = require('./fixtures');
 var concat = require('concat-stream');
 var fs = require('fs');
 
+function clamp(index, len, defaultValue) {
+  if (typeof index !== 'number') return defaultValue;
+  index = ~~index;  // Coerce to integer.
+  if (index >= len) return len;
+  if (index >= 0) return index;
+  index += len;
+  if (index >= 0) return index;
+  return 0;
+}
+
 test('one-file', function(t) {
 	t.plan(3);
 
@@ -76,7 +86,7 @@ test('chunked-one-file', function(t) {
 	var b = fs.readFileSync(fixtures.ONE_FILE_TAR);
 
 	for (var i = 0; i < b.length; i += 321) {
-		extract.write(b.slice(i, i+321));
+		extract.write(b.slice(i, clamp(i+321, b.length, b.length)));
 	}
 	extract.end();
 });
@@ -203,7 +213,7 @@ test('chunked-multi-file', function(t) {
 
 	var b = fs.readFileSync(fixtures.MULTI_FILE_TAR);
 	for (var i = 0; i < b.length; i += 321) {
-		extract.write(b.slice(i, i+321));
+		extract.write(b.slice(i, clamp(i+321, b.length, b.length)));
 	}
 	extract.end();
 });
