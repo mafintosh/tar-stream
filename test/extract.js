@@ -4,15 +4,15 @@ var fixtures = require('./fixtures');
 var concat = require('concat-stream');
 var fs = require('fs');
 
-function clamp(index, len, defaultValue) {
-  if (typeof index !== 'number') return defaultValue;
-  index = ~~index;  // Coerce to integer.
-  if (index >= len) return len;
-  if (index >= 0) return index;
-  index += len;
-  if (index >= 0) return index;
-  return 0;
-}
+var clamp = function(index, len, defaultValue) {
+	if (typeof index !== 'number') return defaultValue;
+	index = ~~index;  // Coerce to integer.
+	if (index >= len) return len;
+	if (index >= 0) return index;
+	index += len;
+	if (index >= 0) return index;
+	return 0;
+};
 
 test('one-file', function(t) {
 	t.plan(3);

@@ -2,15 +2,15 @@ var ZEROS = '0000000000000000000';
 var ZERO_OFFSET = '0'.charCodeAt(0);
 var USTAR = 'ustar00';
 
-function clamp(index, len, defaultValue) {
-  if (typeof index !== 'number') return defaultValue;
-  index = ~~index;  // Coerce to integer.
-  if (index >= len) return len;
-  if (index >= 0) return index;
-  index += len;
-  if (index >= 0) return index;
-  return 0;
-}
+var clamp = function(index, len, defaultValue) {
+	if (typeof index !== 'number') return defaultValue;
+	index = ~~index;  // Coerce to integer.
+	if (index >= len) return len;
+	if (index >= 0) return index;
+	index += len;
+	if (index >= 0) return index;
+	return 0;
+};
 
 var toType = function(flag) {
 	switch (flag) {
