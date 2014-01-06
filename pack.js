@@ -3,6 +3,9 @@ var util = require('util');
 var eos = require('end-of-stream');
 var headers = require('./headers');
 
+var Readable = stream.Readable || require('readable-stream').Readable;
+var Writable = stream.Writable || require('readable-stream').Writable;
+
 var END_OF_TAR = new Buffer(1024);
 END_OF_TAR.fill(0);
 
@@ -14,13 +17,13 @@ var overflow = function(self, size) {
 };
 
 var Sink = function(to) {
-	stream.Writable.call(this);
+	Writable.call(this);
 	this.written = 0;
 	this._to = to;
 	this._destroyed = false;
 };
 
-util.inherits(Sink, stream.Writable);
+util.inherits(Sink, Writable);
 
 Sink.prototype._write = function(data, enc, cb) {
 	this.written += data.length;
@@ -36,7 +39,7 @@ Sink.prototype.destroy = function() {
 
 var Pack = function(opts) {
 	if (!(this instanceof Pack)) return new Pack(opts);
-	stream.Readable.call(this, opts);
+	Readable.call(this, opts);
 
 	this._drain = noop;
 	this._finalized = false;
@@ -45,7 +48,7 @@ var Pack = function(opts) {
 	this._stream = null;
 };
 
-util.inherits(Pack, stream.Readable);
+util.inherits(Pack, Readable);
 
 Pack.prototype.entry = function(header, buffer, callback) {
 	if (this._stream) throw new Error('already piping an entry');

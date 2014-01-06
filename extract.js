@@ -3,6 +3,9 @@ var util = require('util');
 var bl = require('bl');
 var headers = require('./headers');
 
+var Writable = stream.Writable || require('readable-stream').Writable;
+var PassThrough = stream.PassThrough || require('readable-stream').PassThrough;
+
 var noop = function() {};
 
 var overflow = function(size) {
@@ -11,7 +14,7 @@ var overflow = function(size) {
 };
 
 var emptyStream = function() {
-	var s = new stream.PassThrough();
+	var s = new PassThrough();
 	s.end();
 	return s;
 };
@@ -24,7 +27,7 @@ var mixinPax = function(header, pax) {
 
 var Extract = function(opts) {
 	if (!(this instanceof Extract)) return new Extract(opts);
-	stream.Writable.call(this, opts);
+	Writable.call(this, opts);
 
 	this._buffer = bl();
 	this._missing = 0;
@@ -99,7 +102,7 @@ var Extract = function(opts) {
 			return;
 		}
 
-		self._stream = new stream.PassThrough();
+		self._stream = new PassThrough();
 
 		self.emit('entry', header, self._stream, onunlock);
 		self._parse(header.size, onstreamend);
@@ -109,7 +112,7 @@ var Extract = function(opts) {
 	this._parse(512, onheader);
 };
 
-util.inherits(Extract, stream.Writable);
+util.inherits(Extract, Writable);
 
 Extract.prototype.destroy = function(err) {
 	if (this._destroyed) return;
