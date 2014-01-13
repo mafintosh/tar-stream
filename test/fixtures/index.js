@@ -6,3 +6,4 @@ exports.TYPES_TAR = path.join(__dirname, 'types.tar');
 exports.LONG_NAME_TAR = path.join(__dirname, 'long-name.tar');
 exports.UNICODE_BSD_TAR = path.join(__dirname, 'unicode-bsd.tar');
 exports.UNICODE_TAR = path.join(__dirname, 'unicode.tar');
+exports.NAME_IS_100_TAR = path.join(__dirname, 'name-is-100.tar');

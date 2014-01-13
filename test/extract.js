@@ -384,3 +384,24 @@ test('unicode', function(t) { // can unpack a bsdtar unicoded tarball
 
 	extract.end(fs.readFileSync(fixtures.UNICODE_TAR));
 });
+
+test('name-is-100', function(t) {
+	t.plan(3);
+
+	var extract = tar.extract();
+
+	extract.on('entry', function(header, stream, callback) {
+		t.same(header.name.length, 100);
+
+		stream.pipe(concat(function(data) {
+			t.same(data.toString(), 'hello\n');
+			callback();
+		}));
+	});
+
+	extract.on('finish', function() {
+		t.ok(true);
+	});
+
+	extract.end(fs.readFileSync(fixtures.NAME_IS_100_TAR));
+});
