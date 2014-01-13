@@ -68,11 +68,11 @@ var alloc = function(size) {
 	return buf;
 };
 
-var indexOf = function(block, num, offset) {
-	for (; offset < block.length; offset++) {
+var indexOf = function(block, num, offset, end) {
+	for (; offset < end; offset++) {
 		if (block[offset] === num) return offset;
 	}
-	return -1;
+	return end;
 };
 
 var cksum = function(block) {
@@ -88,11 +88,11 @@ var encodeOct = function(val, n) {
 };
 
 var decodeOct = function(val, offset) {
-	return parseInt(val.slice(offset, clamp(indexOf(val, 32, offset), val.length, val.length)).toString(), 8);
+	return parseInt(val.slice(offset, clamp(indexOf(val, 32, offset, val.length), val.length, val.length)).toString(), 8);
 };
 
-var decodeStr = function(val, offset) {
-	return val.slice(offset, indexOf(val, 0, offset)).toString();
+var decodeStr = function(val, offset, length) {
+	return val.slice(offset, indexOf(val, 0, offset, offset+length)).toString();
 };
 
 var addLength = function(str) {
@@ -178,19 +178,19 @@ exports.decode = function(buf) {
 
 	if (!type) return null;
 
-	var name = decodeStr(buf, 0);
+	var name = decodeStr(buf, 0, 100);
 	var mode = decodeOct(buf, 100);
 	var uid = decodeOct(buf, 108);
 	var gid = decodeOct(buf, 116);
 	var size = decodeOct(buf, 124);
 	var mtime = decodeOct(buf, 136);
-	var linkname = buf[157] === 0 ? null : decodeStr(buf, 157);
-	var uname = decodeStr(buf, 265);
-	var gname = decodeStr(buf, 297);
+	var linkname = buf[157] === 0 ? null : decodeStr(buf, 157, 100);
+	var uname = decodeStr(buf, 265, 32);
+	var gname = decodeStr(buf, 297, 32);
 	var devmajor = decodeOct(buf, 329);
 	var devminor = decodeOct(buf, 337);
 
-	if (buf[345]) name = decodeStr(buf, 345)+'/'+name;
+	if (buf[345]) name = decodeStr(buf, 345, 155)+'/'+name;
 
 	if (cksum(buf) !== decodeOct(buf, 148)) return null;
 
