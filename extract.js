@@ -172,4 +172,14 @@ Extract.prototype._write = function(data, enc, cb) {
 	this._onparse();
 };
 
+
+Extract.prototype.end = function(chunk, enc) {
+	if (chunk) this.write(chunk, enc);
+	if (this._stream) {
+		this._stream.on('end', this.emit.bind(this, 'end'));
+	} else {
+		this.emit('end');
+	}
+};
+
 module.exports = Extract;
