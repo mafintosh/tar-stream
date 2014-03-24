@@ -176,8 +176,6 @@ exports.decode = function(buf) {
 	var typeflag = buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET;
 	var type = toType(typeflag);
 
-	if (!type) return null;
-
 	var name = decodeStr(buf, 0, 100);
 	var mode = decodeOct(buf, 100);
 	var uid = decodeOct(buf, 108);
@@ -192,20 +190,29 @@ exports.decode = function(buf) {
 
 	if (buf[345]) name = decodeStr(buf, 345, 155)+'/'+name;
 
-	if (cksum(buf) !== decodeOct(buf, 148)) return null;
+	var c = cksum(buf)
 
-	return {
-		name: name,
-		mode: mode,
-		uid: uid,
-		gid: gid,
-		size: size,
-		mtime: new Date(1000 * mtime),
-		type: toType(typeflag),
-		linkname: linkname,
-		uname: uname,
-		gname: gname,
-		devmajor: devmajor,
-		devminor: devminor
-	};
+	//checksum is still initial value if header was null.
+	if (c === 8*32) return null;
+
+	//valid checksum
+	if (c === decodeOct(buf, 148))
+		return {
+			name: name,
+			mode: mode,
+			uid: uid,
+			gid: gid,
+			size: size,
+			mtime: new Date(1000 * mtime),
+			type: toType(typeflag),
+			linkname: linkname,
+			uname: uname,
+			gname: gname,
+			devmajor: devmajor,
+			devminor: devminor
+		};
+
+	//invalid checksum
+	throw new Error('invalid header');
 };
+

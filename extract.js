@@ -75,7 +75,12 @@ var Extract = function(opts) {
 	};
 
 	var onheader = function() {
-		var header = self._header = headers.decode(b.slice(0, 512));
+		var header
+		try {
+			header = self._header = headers.decode(b.slice(0, 512));
+		} catch (err) {
+			self.emit('error', err)
+		}
 		b.consume(512);
 
 		if (!header) {
