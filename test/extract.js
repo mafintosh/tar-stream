@@ -405,3 +405,16 @@ test('name-is-100', function(t) {
 
 	extract.end(fs.readFileSync(fixtures.NAME_IS_100_TAR));
 });
+
+test('invalid-file', function(t) {
+	t.plan(1);
+
+	var extract = tar.extract();
+
+	extract.on('error', function(err) {
+		t.ok(!!err);
+		extract.destroy();
+	});
+
+	extract.end(fs.readFileSync(fixtures.INVALID_TGZ));
+});
