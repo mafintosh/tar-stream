@@ -79,7 +79,7 @@ var Extract = function(opts) {
 		try {
 			header = self._header = headers.decode(b.slice(0, 512));
 		} catch (err) {
-			self.emit('error', err)
+			self.emit('error', err);
 		}
 		b.consume(512);
 

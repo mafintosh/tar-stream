@@ -196,23 +196,21 @@ exports.decode = function(buf) {
 	if (c === 8*32) return null;
 
 	//valid checksum
-	if (c === decodeOct(buf, 148))
-		return {
-			name: name,
-			mode: mode,
-			uid: uid,
-			gid: gid,
-			size: size,
-			mtime: new Date(1000 * mtime),
-			type: toType(typeflag),
-			linkname: linkname,
-			uname: uname,
-			gname: gname,
-			devmajor: devmajor,
-			devminor: devminor
-		};
+	if (c !== decodeOct(buf, 148)) throw new Error('invalid header');
 
-	//invalid checksum
-	throw new Error('invalid header');
+	return {
+		name: name,
+		mode: mode,
+		uid: uid,
+		gid: gid,
+		size: size,
+		mtime: new Date(1000 * mtime),
+		type: toType(typeflag),
+		linkname: linkname,
+		uname: uname,
+		gname: gname,
+		devmajor: devmajor,
+		devminor: devminor
+	};
 };
 
