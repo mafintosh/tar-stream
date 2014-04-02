@@ -14,8 +14,7 @@
   },
   "devDependencies": {
     "tap": "~0.4.6",
-    "concat-stream": "~1.2.1",
-    "readable-stream": "~1.1.9"
+    "concat-stream": "~1.2.1"
   },
   "scripts": {
     "test": "tap test/*.js"
