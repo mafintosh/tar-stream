@@ -1,10 +1,10 @@
-var stream = require('stream');
 var util = require('util');
 var eos = require('end-of-stream');
 var headers = require('./headers');
 
-var Readable = stream.Readable || require('readable-stream').Readable;
-var Writable = stream.Writable || require('readable-stream').Writable;
+var Readable = require('readable-stream').Readable;
+var Writable = require('readable-stream').Writable;
+var PassThrough = require('readable-stream').PassThrough;
 
 var END_OF_TAR = new Buffer(1024);
 END_OF_TAR.fill(0);
@@ -86,7 +86,7 @@ Pack.prototype.entry = function(header, buffer, callback) {
 	}
 
 	this._encode(header);
-	this._stream = stream;
+	this._stream = new PassThrough();
 
 	var sink = new Sink(this);
 
