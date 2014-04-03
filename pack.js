@@ -85,10 +85,10 @@ Pack.prototype.entry = function(header, buffer, callback) {
 		return;
 	}
 
-	this._encode(header);
-	this._stream = new PassThrough();
-
 	var sink = new Sink(this);
+
+	this._encode(header);
+	this._stream = sink;
 
 	eos(sink, function(err) {
 		self._stream = null;
