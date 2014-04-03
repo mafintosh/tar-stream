@@ -1,10 +1,9 @@
-var stream = require('stream');
 var util = require('util');
 var bl = require('bl');
 var headers = require('./headers');
 
-var Writable = stream.Writable || require('readable-stream').Writable;
-var PassThrough = stream.PassThrough || require('readable-stream').PassThrough;
+var Writable = require('readable-stream').Writable;
+var PassThrough = require('readable-stream').PassThrough;
 
 var noop = function() {};
 
