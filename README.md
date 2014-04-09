@@ -47,7 +47,7 @@ extract.on('entry', function(header, stream, callback) {
 
 	stream.resume(); // just auto drain the stream
 	stream.on('end', function() {
-		next(); // ready for next entry
+		callback(); // ready for next entry
 	});
 });
 
