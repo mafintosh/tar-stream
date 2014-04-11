@@ -1,6 +1,6 @@
 var ZEROS = '0000000000000000000';
 var ZERO_OFFSET = '0'.charCodeAt(0);
-var USTAR = 'ustar00';
+var USTAR = 'ustar\x0000';
 
 var clamp = function(index, len, defaultValue) {
 	if (typeof index !== 'number') return defaultValue;
