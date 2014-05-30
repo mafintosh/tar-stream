@@ -11,7 +11,7 @@
     "bl": "~0.6.0",
     "end-of-stream": "~0.1.3",
     "readable-stream": "~1.0.26-4",
-    "xtend": "^3.0.0"
+    "xtend": "~3.0.0"
   },
   "devDependencies": {
     "tap": "~0.4.6",
