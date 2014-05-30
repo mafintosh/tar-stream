@@ -32,6 +32,8 @@ var toType = function(flag) {
 		return 'contiguous-file';
 		case 72:
 		return 'pax-header';
+		case 55:
+		return 'pax-global-header'
 	}
 
 	return null;

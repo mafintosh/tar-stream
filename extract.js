@@ -1,5 +1,6 @@
 var util = require('util');
 var bl = require('bl');
+var xtend = require('xtend');
 var headers = require('./headers');
 
 var Writable = require('readable-stream').Writable;
@@ -38,6 +39,7 @@ var Extract = function(opts) {
 	this._locked = false;
 	this._destroyed = false;
 	this._pax = null;
+	this._paxGlobal = null;
 
 	var self = this;
 	var b = self._buffer;
@@ -66,9 +68,17 @@ var Extract = function(opts) {
 		oncontinue();
 	};
 
+	var onpaxglobalheader = function() {
+		var size = self._header.size;
+		self._paxGlobal = headers.decodePax(b.slice(0, size));
+		b.consume(size);
+		onstreamend();
+	}
+
 	var onpaxheader = function() {
 		var size = self._header.size;
 		self._pax = headers.decodePax(b.slice(0, size));
+		if (self._paxGlobal) self._pax = xtend(self._paxGlobal, self._pax);
 		b.consume(size);
 		onstreamend();
 	};
@@ -84,6 +94,11 @@ var Extract = function(opts) {
 
 		if (!header) {
 			self._parse(512, onheader);
+			oncontinue();
+			return;
+		}
+		if (header.type === 'pax-global-header') {
+			self._parse(header.size, onpaxglobalheader);
 			oncontinue();
 			return;
 		}
