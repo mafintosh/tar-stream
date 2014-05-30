@@ -37,6 +37,23 @@ Sink.prototype.destroy = function() {
 	this.emit('close');
 };
 
+var Void = function() {
+	Writable.call(this)
+	this._destroyed = false;
+};
+
+util.inherits(Void, Writable);
+
+Void.prototype._write = function(data, enc, cb) {
+	cb(new Error('No body allowed for this entry'))
+};
+
+Void.prototype.destroy = function() {
+	if (this._destroyed) return;
+	this._destroyed = true;
+	this.emit('close')
+}
+
 var Pack = function(opts) {
 	if (!(this instanceof Pack)) return new Pack(opts);
 	Readable.call(this, opts);
@@ -77,12 +94,12 @@ Pack.prototype.entry = function(header, buffer, callback) {
 		this.push(buffer);
 		overflow(self, header.size);
 		process.nextTick(callback);
-		return;
+		return new Void();
 	}
 	if (header.type !== 'file' && header.type !== 'contigious-file') {
 		this._encode(header);
 		process.nextTick(callback);
-		return;
+		return new Void();
 	}
 
 	var sink = new Sink(this);
