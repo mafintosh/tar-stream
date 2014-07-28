@@ -6,13 +6,13 @@ tar-stream is a streaming tar parser and generator and nothing else. It is strea
 
 [![build status](https://secure.travis-ci.org/mafintosh/tar-stream.png)](http://travis-ci.org/mafintosh/tar-stream)
 
-# Usage
+## Usage
 
 tar-stream exposes two streams, [pack](https://github.com/mafintosh/tar-stream#packing) which creates tarballs and [extract](https://github.com/mafintosh/tar-stream#extracting) which extracts tarballs. To [modify an existing tarball](https://github.com/mafintosh/tar-stream#modifying-existing-tarballs) use both.
 
 ## Related
 
-If you want to pack/unpack directories on the file system check out [tar-fs](https://github.com/mafintosh/tar-fs) with provides file system bindings to this module
+If you want to pack/unpack directories on the file system check out [tar-fs](https://github.com/mafintosh/tar-fs) which provides file system bindings to this module.
 
 ## Packing
 
@@ -65,7 +65,7 @@ pack.pipe(extract);
 ## Headers
 
 The header object using in `entry` should contain the following properties.
-Most of these values can be found by stating a file.
+Most of these values can be found by stat'ing a file.
 
 ``` js
 {
