@@ -1,4 +1,4 @@
-var test = require('tap').test;
+var test = require('tape');
 var tar = require('../index');
 var fixtures = require('./fixtures');
 var concat = require('concat-stream');
