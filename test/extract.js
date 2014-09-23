@@ -418,3 +418,20 @@ test('invalid-file', function(t) {
 
 	extract.end(fs.readFileSync(fixtures.INVALID_TGZ));
 });
+
+test('space prefixed', function(t) {
+	t.plan(5);
+
+	var extract = tar.extract();
+
+	extract.on('entry', function(header, stream, callback) {
+		t.ok(true)
+		callback();
+	});
+
+	extract.on('finish', function() {
+		t.ok(true);
+	});
+
+	extract.end(fs.readFileSync(fixtures.SPACE_TAR_GZ));
+});
