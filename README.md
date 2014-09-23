@@ -2,7 +2,9 @@
 
 tar-stream is a streaming tar parser and generator and nothing else. It is streams2 and operates purely using streams which means you can easily extract/parse tarballs without ever hitting the file system.
 
-	npm install tar-stream
+```
+npm install tar-stream
+```
 
 [![build status](https://secure.travis-ci.org/mafintosh/tar-stream.png)](http://travis-ci.org/mafintosh/tar-stream)
 
@@ -22,22 +24,22 @@ If you want to pack/unpack directories on the file system check out [tar-fs](htt
 To create a pack stream use `tar.pack()` and call `pack.entry(header, [callback])` to add tar entries.
 
 ``` js
-var tar = require('tar-stream');
-var pack = tar.pack(); // p is a streams2 stream
+var tar = require('tar-stream')
+var pack = tar.pack() // p is a streams2 stream
 
 // add a file called my-test.txt with the content "Hello World!"
-pack.entry({ name: 'my-test.txt' }, 'Hello World!');
+pack.entry({ name: 'my-test.txt' }, 'Hello World!')
 
 // add a file called my-stream-test.txt from a stream
 var entry = pack.entry({ name: 'my-stream-test.txt' }, function(err) {
-	// the stream was added
-	// no more entries
-	pack.finalize();
-});
-myStream.pipe(entry);
+  // the stream was added
+  // no more entries
+  pack.finalize()
+})
+myStream.pipe(entry)
 
 // pipe the pack stream somewhere
-pack.pipe(process.stdout);
+pack.pipe(process.stdout)
 ```
 
 ## Extracting
@@ -45,24 +47,24 @@ pack.pipe(process.stdout);
 To extract a stream use `tar.extract()` and listen for `extract.on('entry', header, stream, callback)`
 
 ``` js
-var extract = tar.extract();
+var extract = tar.extract()
 
 extract.on('entry', function(header, stream, callback) {
-	// header is the tar header
-	// stream is the content body (might be an empty stream)
-	// call next when you are done with this entry
+  // header is the tar header
+  // stream is the content body (might be an empty stream)
+  // call next when you are done with this entry
 
-	stream.resume(); // just auto drain the stream
-	stream.on('end', function() {
-		callback(); // ready for next entry
-	});
-});
+  stream.resume() // just auto drain the stream
+  stream.on('end', function() {
+    callback() // ready for next entry
+  })
+})
 
 extract.on('finish', function() {
-	// all entries read
-});
+  // all entries read
+})
 
-pack.pipe(extract);
+pack.pipe(extract)
 ```
 
 ## Headers
@@ -72,20 +74,20 @@ Most of these values can be found by stat'ing a file.
 
 ``` js
 {
-	name: 'path/to/this/entry.txt',
-	size: 1314,        // entry size. defaults to 0
-	mode: 0644,        // entry mode. defaults to to 0755 for dirs and 0644 otherwise
-	mtime: new Date(), // last modified date for entry. defaults to now.
-	type: 'file',      // type of entry. defaults to file. can be:
-	                   // file | link | symlink | directory | block-device
-	                   // character-device | fifo | contigious-file
-	linkname: 'path',  // linked file name
-	uid: 0,            // uid of entry owner. defaults to 0
-	gid: 0,            // gid of entry owner. defaults to 0
-	uname: 'maf',      // uname of entry owner. defaults to null
-	gname: 'staff',    // gname of entry owner. defaults to null
-	devmajor: 0,       // device major version. defaults to 0
-	devminor: 0        // device minor version. defaults to 0
+  name: 'path/to/this/entry.txt',
+  size: 1314,        // entry size. defaults to 0
+  mode: 0644,        // entry mode. defaults to to 0755 for dirs and 0644 otherwise
+  mtime: new Date(), // last modified date for entry. defaults to now.
+  type: 'file',      // type of entry. defaults to file. can be:
+                     // file | link | symlink | directory | block-device
+                     // character-device | fifo | contigious-file
+  linkname: 'path',  // linked file name
+  uid: 0,            // uid of entry owner. defaults to 0
+  gid: 0,            // gid of entry owner. defaults to 0
+  uname: 'maf',      // uname of entry owner. defaults to null
+  gname: 'staff',    // gname of entry owner. defaults to null
+  devmajor: 0,       // device major version. defaults to 0
+  devminor: 0        // device minor version. defaults to 0
 }
 ```
 
@@ -94,27 +96,27 @@ Most of these values can be found by stat'ing a file.
 Using tar-stream it is easy to rewrite paths / change modes etc in an existing tarball.
 
 ``` js
-var extract = tar.extract();
-var pack = tar.pack();
-var path = require('path');
+var extract = tar.extract()
+var pack = tar.pack()
+var path = require('path')
 
 extract.on('entry', function(header, stream, callback) {
-	// let's prefix all names with 'tmp'
-	header.name = path.join('tmp', header.name);
-	// write the new entry to the pack stream
-	stream.pipe(pack.entry(header, callback));
-});
+  // let's prefix all names with 'tmp'
+  header.name = path.join('tmp', header.name)
+  // write the new entry to the pack stream
+  stream.pipe(pack.entry(header, callback))
+})
 
 extract.on('finish', function() {
-	// all entries done - lets finalize it
-	pack.finalize();
-});
+  // all entries done - lets finalize it
+  pack.finalize()
+})
 
 // pipe the old tarball to the extractor
-oldTarball.pipe(extract);
+oldTarball.pipe(extract)
 
 // pipe the new tarball the another stream
-pack.pipe(newTarball);
+pack.pipe(newTarball)
 ```
 
 ## Performance
