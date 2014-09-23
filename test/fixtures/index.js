@@ -8,3 +8,4 @@ exports.UNICODE_BSD_TAR = path.join(__dirname, 'unicode-bsd.tar');
 exports.UNICODE_TAR = path.join(__dirname, 'unicode.tar');
 exports.NAME_IS_100_TAR = path.join(__dirname, 'name-is-100.tar');
 exports.INVALID_TGZ = path.join(__dirname, 'invalid.tgz');
+exports.SPACE_TAR_GZ = path.join(__dirname, 'space.tar');
