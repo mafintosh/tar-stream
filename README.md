@@ -54,10 +54,11 @@ extract.on('entry', function(header, stream, callback) {
   // stream is the content body (might be an empty stream)
   // call next when you are done with this entry
 
-  stream.resume() // just auto drain the stream
   stream.on('end', function() {
     callback() // ready for next entry
   })
+
+  stream.resume() // just auto drain the stream
 })
 
 extract.on('finish', function() {
