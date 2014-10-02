@@ -25,7 +25,7 @@ To create a pack stream use `tar.pack()` and call `pack.entry(header, [callback]
 
 ``` js
 var tar = require('tar-stream')
-var pack = tar.pack() // p is a streams2 stream
+var pack = tar.pack() // pack is a streams2 stream
 
 // add a file called my-test.txt with the content "Hello World!"
 pack.entry({ name: 'my-test.txt' }, 'Hello World!')
@@ -36,7 +36,8 @@ var entry = pack.entry({ name: 'my-stream-test.txt' }, function(err) {
   // no more entries
   pack.finalize()
 })
-myStream.pipe(entry)
+
+someTarballStream.pipe(entry)
 
 // pipe the pack stream somewhere
 pack.pipe(process.stdout)
@@ -114,10 +115,10 @@ extract.on('finish', function() {
 })
 
 // pipe the old tarball to the extractor
-oldTarball.pipe(extract)
+oldTarballStream.pipe(extract)
 
 // pipe the new tarball the another stream
-pack.pipe(newTarball)
+pack.pipe(newTarballStream)
 ```
 
 ## Performance
