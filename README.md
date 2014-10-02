@@ -37,7 +37,7 @@ var entry = pack.entry({ name: 'my-stream-test.txt' }, function(err) {
   pack.finalize()
 })
 
-someTarballStream.pipe(entry)
+someEntryStream.pipe(entry)
 
 // pipe the pack stream somewhere
 pack.pipe(process.stdout)
