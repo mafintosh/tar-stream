@@ -44,6 +44,10 @@
   },
   "homepage": "https://github.com/mafintosh/tar-stream",
   "main": "index.js",
+  "files": [
+    "./*.js",
+    "LICENSE"
+  ],
   "directories": {
     "test": "test"
   },
