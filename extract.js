@@ -13,8 +13,8 @@ var overflow = function(size) {
   return size && 512 - size
 }
 
-var emptyStream = function() {
-  var s = new PassThrough()
+var emptyStream = function(self, offset) {
+  var s = new Source(self, offset)
   s.end()
   return s
 }
@@ -25,10 +25,24 @@ var mixinPax = function(header, pax) {
   return header
 }
 
+var Source = function(self, offset) {
+  this._parent = self
+  this.offset = offset
+  console.log(this.offset,'<--', offset)
+  PassThrough.call(this)
+}
+
+util.inherits(Source, PassThrough)
+
+Source.prototype.destroy = function(err) {
+  this._parent.destroy(err)
+}
+
 var Extract = function(opts) {
   if (!(this instanceof Extract)) return new Extract(opts)
   Writable.call(this, opts)
 
+  this._offset = 0
   this._buffer = bl()
   this._missing = 0
   this._onparse = noop
@@ -84,6 +98,7 @@ var Extract = function(opts) {
   }
 
   var onheader = function() {
+    var offset = self._offset
     var header
     try {
       header = self._header = headers.decode(b.slice(0, 512))
@@ -117,11 +132,11 @@ var Extract = function(opts) {
 
     if (!header.size) {
       self._parse(512, onheader)
-      self.emit('entry', header, emptyStream(), onunlock)
+      self.emit('entry', header, emptyStream(self, offset), onunlock)
       return
     }
 
-    self._stream = new PassThrough()
+    self._stream = new Source(self, offset)
 
     self.emit('entry', header, self._stream, onunlock)
     self._parse(header.size, onstreamend)
@@ -144,6 +159,7 @@ Extract.prototype.destroy = function(err) {
 
 Extract.prototype._parse = function(size, onparse) {
   if (this._destroyed) return
+  this._offset += size
   this._missing = size
   this._onparse = onparse
 }
