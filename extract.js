@@ -28,7 +28,6 @@ var mixinPax = function(header, pax) {
 var Source = function(self, offset) {
   this._parent = self
   this.offset = offset
-  console.log(this.offset,'<--', offset)
   PassThrough.call(this)
 }
 
