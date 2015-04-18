@@ -435,3 +435,21 @@ test('space prefixed', function(t) {
 
   extract.end(fs.readFileSync(fixtures.SPACE_TAR_GZ))
 })
+
+test('gnu long path', function(t) {
+  t.plan(2)
+
+  var extract = tar.extract()
+
+  extract.on('entry', function(header, stream, callback) {
+    t.ok(header.name.length > 100)
+    callback()
+  })
+
+  extract.on('finish', function() {
+    t.ok(true)
+  })
+
+  extract.end(fs.readFileSync(fixtures.GNU_LONG_PATH))
+
+})

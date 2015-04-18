@@ -53,6 +53,8 @@ var Extract = function(opts) {
   this._destroyed = false
   this._pax = null
   this._paxGlobal = null
+  this._gnuLongPath = null
+  this._gnuLongLinkPath = null
 
   var self = this
   var b = self._buffer
@@ -96,6 +98,20 @@ var Extract = function(opts) {
     onstreamend()
   }
 
+  var ongnulongpath = function() {
+    var size = self._header.size
+    this._gnuLongPath = headers.decodeLongPath(b.slice(0, size))
+    b.consume(size)
+    onstreamend()
+  }
+
+  var ongnulonglinkpath = function() {
+    var size = self._header.size
+    this._gnuLongLinkPath = headers.decodeLongPath(b.slice(0, size))
+    b.consume(size)
+    onstreamend()
+  }
+
   var onheader = function() {
     var offset = self._offset
     var header
@@ -111,6 +127,16 @@ var Extract = function(opts) {
       oncontinue()
       return
     }
+    if (header.type === 'gnu-long-path') {
+      self._parse(header.size, ongnulongpath)
+      oncontinue()
+      return
+    }
+    if (header.type === 'gnu-long-link-path') {
+      self._parse(header.size, ongnulonglinkpath)
+      oncontinue()
+      return
+    }
     if (header.type === 'pax-global-header') {
       self._parse(header.size, onpaxglobalheader)
       oncontinue()
@@ -120,6 +146,16 @@ var Extract = function(opts) {
       self._parse(header.size, onpaxheader)
       oncontinue()
       return
+    }
+
+    if (self._gnuLongPath) {
+      header.name = self._gnuLongPath
+      self._gnuLongPath = null
+    }
+
+    if (self._gnuLongLinkPath) {
+      header.linkname = self._gnuLongLinkPath
+      self._gnuLongLinkPath = null
     }
 
     if (self._pax) {

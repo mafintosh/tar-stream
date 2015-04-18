@@ -34,6 +34,11 @@ var toType = function(flag) {
     return 'pax-header'
     case 55:
     return 'pax-global-header'
+    case 27:
+    return 'gnu-long-link-path'
+    case 28:
+    case 30:
+    return 'gnu-long-path'
   }
 
   return null
@@ -108,6 +113,10 @@ var addLength = function(str) {
   if (len + digits > Math.pow(10, digits)) digits++
 
   return (len+digits)+str
+}
+
+exports.decodeLongPath = function(buf) {
+  return decodeStr(buf, 0, buf.length)
 }
 
 exports.encodePax = function(opts) { // TODO: encode more stuff in pax
