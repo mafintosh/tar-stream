@@ -92,8 +92,10 @@ var encodeOct = function(val, n) {
 var decodeOct = function(val, offset) {
   // Older versions of tar can prefix with spaces
   while (offset < val.length && val[offset] === 32) offset++
-
-  return parseInt(val.slice(offset, clamp(indexOf(val, 32, offset, val.length), val.length, val.length)).toString(), 8)
+  var end = clamp(indexOf(val, 32, offset, val.length), val.length, val.length)
+  while (offset < end && val[offset] === 0) offset++
+  if (end === offset) return 0
+  return parseInt(val.slice(offset, end).toString(), 8)
 }
 
 var decodeStr = function(val, offset, length) {
