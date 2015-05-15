@@ -213,7 +213,7 @@ exports.decode = function(buf) {
   if (c === 8*32) return null
 
   //valid checksum
-  if (c !== decodeOct(buf, 148)) throw new Error('invalid header')
+  if (c !== decodeOct(buf, 148)) throw new Error("Invalid tar header. Maybe the tar is corrupted or it needs to be gunzipped?")
 
   return {
     name: name,
