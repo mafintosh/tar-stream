@@ -112,15 +112,40 @@ Pack.prototype.entry = function(header, buffer, callback) {
     process.nextTick(callback)
     return new Void()
   }
+
+  if (header.type === 'symlink' && !header.linkname) {
+    var stream = new Writable
+    var linkname = ''
+
+    stream._write = function(data, enc, cb)
+    {
+      linkname += data
+      cb()
+    }
+    eos(stream, function(err)
+    {
+      if (err) { // stream was closed
+        self.destroy()
+        return callback(err)
+      }
+
+      header.linkname = linkname
+      self._encode(header)
+      callback()
+    })
+
+    return stream
+  }
+
+  this._encode(header)
+
   if (header.type !== 'file' && header.type !== 'contigious-file') {
-    this._encode(header)
     process.nextTick(callback)
     return new Void()
   }
 
   var sink = new Sink(this)
 
-  this._encode(header)
   this._stream = sink
 
   eos(sink, function(err) {
