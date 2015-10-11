@@ -1,10 +1,12 @@
-var util = require('util')
-var eos = require('end-of-stream')
+var eos       = require('end-of-stream')
+var util      = require('util')
+
+var Readable    = require('readable-stream').Readable
+var PassThrough = require('readable-stream').PassThrough
+var Writable    = require('readable-stream').Writable
+
 var headers = require('./headers')
 
-var Readable = require('readable-stream').Readable
-var Writable = require('readable-stream').Writable
-var PassThrough = require('readable-stream').PassThrough
 
 var END_OF_TAR = new Buffer(1024)
 END_OF_TAR.fill(0)

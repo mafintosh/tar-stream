@@ -190,15 +190,13 @@ exports.encode = function(opts) {
 }
 
 exports.decode = function(buf) {
-  var typeflag = buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET
-  var type = toType(typeflag)
-
   var name = decodeStr(buf, 0, 100)
   var mode = decodeOct(buf, 100)
   var uid = decodeOct(buf, 108)
   var gid = decodeOct(buf, 116)
   var size = decodeOct(buf, 124)
   var mtime = decodeOct(buf, 136)
+  var type = toType(buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET)
   var linkname = buf[157] === 0 ? null : decodeStr(buf, 157, 100)
   var uname = decodeStr(buf, 265, 32)
   var gname = decodeStr(buf, 297, 32)
@@ -222,7 +220,7 @@ exports.decode = function(buf) {
     gid: gid,
     size: size,
     mtime: new Date(1000 * mtime),
-    type: toType(typeflag),
+    type: type,
     linkname: linkname,
     uname: uname,
     gname: gname,
