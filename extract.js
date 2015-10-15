@@ -6,26 +6,26 @@ var headers = require('./headers')
 var Writable = require('readable-stream').Writable
 var PassThrough = require('readable-stream').PassThrough
 
-var noop = function() {}
+var noop = function () {}
 
-var overflow = function(size) {
+var overflow = function (size) {
   size &= 511
   return size && 512 - size
 }
 
-var emptyStream = function(self, offset) {
+var emptyStream = function (self, offset) {
   var s = new Source(self, offset)
   s.end()
   return s
 }
 
-var mixinPax = function(header, pax) {
+var mixinPax = function (header, pax) {
   if (pax.path) header.name = pax.path
   if (pax.linkpath) header.linkname = pax.linkpath
   return header
 }
 
-var Source = function(self, offset) {
+var Source = function (self, offset) {
   this._parent = self
   this.offset = offset
   PassThrough.call(this)
@@ -33,11 +33,11 @@ var Source = function(self, offset) {
 
 util.inherits(Source, PassThrough)
 
-Source.prototype.destroy = function(err) {
+Source.prototype.destroy = function (err) {
   this._parent.destroy(err)
 }
 
-var Extract = function(opts) {
+var Extract = function (opts) {
   if (!(this instanceof Extract)) return new Extract(opts)
   Writable.call(this, opts)
 
@@ -59,17 +59,17 @@ var Extract = function(opts) {
   var self = this
   var b = self._buffer
 
-  var oncontinue = function() {
+  var oncontinue = function () {
     self._continue()
   }
 
-  var onunlock = function(err) {
+  var onunlock = function (err) {
     self._locked = false
     if (err) return self.destroy(err)
     if (!self._stream) oncontinue()
   }
 
-  var onstreamend = function() {
+  var onstreamend = function () {
     self._stream = null
     var drain = overflow(self._header.size)
     if (drain) self._parse(drain, ondrain)
@@ -77,20 +77,20 @@ var Extract = function(opts) {
     if (!self._locked) oncontinue()
   }
 
-  var ondrain = function() {
+  var ondrain = function () {
     self._buffer.consume(overflow(self._header.size))
     self._parse(512, onheader)
     oncontinue()
   }
 
-  var onpaxglobalheader = function() {
+  var onpaxglobalheader = function () {
     var size = self._header.size
     self._paxGlobal = headers.decodePax(b.slice(0, size))
     b.consume(size)
     onstreamend()
   }
 
-  var onpaxheader = function() {
+  var onpaxheader = function () {
     var size = self._header.size
     self._pax = headers.decodePax(b.slice(0, size))
     if (self._paxGlobal) self._pax = xtend(self._paxGlobal, self._pax)
@@ -98,21 +98,21 @@ var Extract = function(opts) {
     onstreamend()
   }
 
-  var ongnulongpath = function() {
+  var ongnulongpath = function () {
     var size = self._header.size
     this._gnuLongPath = headers.decodeLongPath(b.slice(0, size))
     b.consume(size)
     onstreamend()
   }
 
-  var ongnulonglinkpath = function() {
+  var ongnulonglinkpath = function () {
     var size = self._header.size
     this._gnuLongLinkPath = headers.decodeLongPath(b.slice(0, size))
     b.consume(size)
     onstreamend()
   }
 
-  var onheader = function() {
+  var onheader = function () {
     var offset = self._offset
     var header
     try {
@@ -183,7 +183,7 @@ var Extract = function(opts) {
 
 util.inherits(Extract, Writable)
 
-Extract.prototype.destroy = function(err) {
+Extract.prototype.destroy = function (err) {
   if (this._destroyed) return
   this._destroyed = true
 
@@ -192,14 +192,14 @@ Extract.prototype.destroy = function(err) {
   if (this._stream) this._stream.emit('close')
 }
 
-Extract.prototype._parse = function(size, onparse) {
+Extract.prototype._parse = function (size, onparse) {
   if (this._destroyed) return
   this._offset += size
   this._missing = size
   this._onparse = onparse
 }
 
-Extract.prototype._continue = function(err) {
+Extract.prototype._continue = function () {
   if (this._destroyed) return
   var cb = this._cb
   this._cb = noop
@@ -207,7 +207,7 @@ Extract.prototype._continue = function(err) {
   else cb()
 }
 
-Extract.prototype._write = function(data, enc, cb) {
+Extract.prototype._write = function (data, enc, cb) {
   if (this._destroyed) return
 
   var s = this._stream
