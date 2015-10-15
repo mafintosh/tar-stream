@@ -190,13 +190,15 @@ exports.encode = function(opts) {
 }
 
 exports.decode = function(buf) {
+  var typeflag = buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET
+
   var name = decodeStr(buf, 0, 100)
   var mode = decodeOct(buf, 100)
   var uid = decodeOct(buf, 108)
   var gid = decodeOct(buf, 116)
   var size = decodeOct(buf, 124)
   var mtime = decodeOct(buf, 136)
-  var type = toType(buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET)
+  var type = toType(typeflag)
   var linkname = buf[157] === 0 ? null : decodeStr(buf, 157, 100)
   var uname = decodeStr(buf, 265, 32)
   var gname = decodeStr(buf, 297, 32)
@@ -204,6 +206,9 @@ exports.decode = function(buf) {
   var devminor = decodeOct(buf, 337)
 
   if (buf[345]) name = decodeStr(buf, 345, 155)+'/'+name
+
+  // to support old tar versions that use trailing / to indicate dirs
+  if (typeflag === 0 && name && name[name.length - 1] === '/') typeflag = 5
 
   var c = cksum(buf)
 
