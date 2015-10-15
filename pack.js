@@ -1,10 +1,10 @@
 var constants = require('constants')
-var eos       = require('end-of-stream')
-var util      = require('util')
+var eos = require('end-of-stream')
+var util = require('util')
 
-var Readable    = require('readable-stream').Readable
+var Readable = require('readable-stream').Readable
 var PassThrough = require('readable-stream').PassThrough
-var Writable    = require('readable-stream').Writable
+var Writable = require('readable-stream').Writable
 
 var headers = require('./headers')
 
@@ -19,8 +19,7 @@ var overflow = function(self, size) {
   if (size) self.push(END_OF_TAR.slice(0, 512 - size))
 }
 
-function mode2type(mode)
-{
+function mode2type(mode) {
   switch (mode & constants.S_IFMT) {
     case constants.S_IFBLK: return 'block-device'
     case constants.S_IFCHR: return 'character-device'
@@ -117,13 +116,11 @@ Pack.prototype.entry = function(header, buffer, callback) {
     var stream = new Writable
     var linkname = ''
 
-    stream._write = function(data, enc, cb)
-    {
+    stream._write = function(data, enc, cb) {
       linkname += data
       cb()
     }
-    eos(stream, function(err)
-    {
+    eos(stream, function(err) {
       if (err) { // stream was closed
         self.destroy()
         return callback(err)
