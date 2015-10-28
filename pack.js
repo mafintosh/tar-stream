@@ -1,10 +1,13 @@
-var util = require('util')
+var constants = require('constants')
 var eos = require('end-of-stream')
-var headers = require('./headers')
+var util = require('util')
 
 var Readable = require('readable-stream').Readable
-var Writable = require('readable-stream').Writable
 var PassThrough = require('readable-stream').PassThrough
+var Writable = require('readable-stream').Writable
+
+var headers = require('./headers')
+
 
 var END_OF_TAR = new Buffer(1024)
 END_OF_TAR.fill(0)
@@ -14,6 +17,18 @@ var noop = function() {}
 var overflow = function(self, size) {
   size &= 511
   if (size) self.push(END_OF_TAR.slice(0, 512 - size))
+}
+
+function mode2type(mode) {
+  switch (mode & constants.S_IFMT) {
+    case constants.S_IFBLK: return 'block-device'
+    case constants.S_IFCHR: return 'character-device'
+    case constants.S_IFDIR: return 'directory'
+    case constants.S_IFIFO: return 'fifo'
+    case constants.S_IFLNK: return 'symlink'
+  }
+
+  return 'file'
 }
 
 var Sink = function(to) {
@@ -81,7 +96,7 @@ Pack.prototype.entry = function(header, buffer, callback) {
   var self = this
 
   if (!header.size)  header.size = 0
-  if (!header.type)  header.type = 'file'
+  if (!header.type)  header.type = mode2type(header.mode)
   if (!header.mode)  header.mode = header.type === 'directory' ? 0755 : 0644
   if (!header.uid)   header.uid = 0
   if (!header.gid)   header.gid = 0
@@ -96,15 +111,38 @@ Pack.prototype.entry = function(header, buffer, callback) {
     process.nextTick(callback)
     return new Void()
   }
+
+  if (header.type === 'symlink' && !header.linkname) {
+    var stream = new Writable
+    var linkname = ''
+
+    stream._write = function(data, enc, cb) {
+      linkname += data
+      cb()
+    }
+    eos(stream, function(err) {
+      if (err) { // stream was closed
+        self.destroy()
+        return callback(err)
+      }
+
+      header.linkname = linkname
+      self._encode(header)
+      callback()
+    })
+
+    return stream
+  }
+
+  this._encode(header)
+
   if (header.type !== 'file' && header.type !== 'contigious-file') {
-    this._encode(header)
     process.nextTick(callback)
     return new Void()
   }
 
   var sink = new Sink(this)
 
-  this._encode(header)
   this._stream = sink
 
   eos(sink, function(err) {
