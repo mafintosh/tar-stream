@@ -5,6 +5,7 @@ var util = require('util')
 var Readable = require('readable-stream').Readable
 var PassThrough = require('readable-stream').PassThrough
 var Writable = require('readable-stream').Writable
+var StringDecoder = require('string_decoder').StringDecoder
 
 var headers = require('./headers')
 
@@ -19,7 +20,7 @@ var overflow = function(self, size) {
   if (size) self.push(END_OF_TAR.slice(0, 512 - size))
 }
 
-function mode2type(mode) {
+function modeToType(mode) {
   switch (mode & constants.S_IFMT) {
     case constants.S_IFBLK: return 'block-device'
     case constants.S_IFCHR: return 'character-device'
@@ -47,6 +48,26 @@ Sink.prototype._write = function(data, enc, cb) {
 }
 
 Sink.prototype.destroy = function() {
+  if (this._destroyed) return
+  this._destroyed = true
+  this.emit('close')
+}
+
+var LinkSink = function () {
+  Writable.call(this)
+  this.linkname = ''
+  this._decoder = new StringDecoder('utf-8')
+  this._destroyed = false
+}
+
+util.inherits(LinkSink, Writable)
+
+LinkSink.prototype._write = function (data, enc, cb) {
+  this.linkname += this._decoder.write(data)
+  cb()
+}
+
+LinkSink.prototype.destroy = function() {
   if (this._destroyed) return
   this._destroyed = true
   this.emit('close')
@@ -96,7 +117,7 @@ Pack.prototype.entry = function(header, buffer, callback) {
   var self = this
 
   if (!header.size)  header.size = 0
-  if (!header.type)  header.type = mode2type(header.mode)
+  if (!header.type)  header.type = modeToType(header.mode)
   if (!header.mode)  header.mode = header.type === 'directory' ? 0755 : 0644
   if (!header.uid)   header.uid = 0
   if (!header.gid)   header.gid = 0
@@ -113,25 +134,19 @@ Pack.prototype.entry = function(header, buffer, callback) {
   }
 
   if (header.type === 'symlink' && !header.linkname) {
-    var stream = new Writable
-    var linkname = ''
-
-    stream._write = function(data, enc, cb) {
-      linkname += data
-      cb()
-    }
-    eos(stream, function(err) {
+    var linkSink = new LinkSink()
+    eos(linkSink, function(err) {
       if (err) { // stream was closed
         self.destroy()
         return callback(err)
       }
 
-      header.linkname = linkname
+      header.linkname = linkSink.linkname
       self._encode(header)
       callback()
     })
 
-    return stream
+    return linkSink
   }
 
   this._encode(header)
