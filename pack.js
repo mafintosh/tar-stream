@@ -9,6 +9,8 @@ var StringDecoder = require('string_decoder').StringDecoder
 
 var headers = require('./headers')
 
+var DMODE = parseInt('755', 8)
+var FMODE = parseInt('644', 8)
 
 var END_OF_TAR = new Buffer(1024)
 END_OF_TAR.fill(0)
@@ -118,7 +120,7 @@ Pack.prototype.entry = function(header, buffer, callback) {
 
   if (!header.size)  header.size = 0
   if (!header.type)  header.type = modeToType(header.mode)
-  if (!header.mode)  header.mode = parseInt(header.type === 'directory' ? '0755' : '0644')
+  if (!header.mode)  header.mode = header.type === 'directory' ? DMODE : FMODE
   if (!header.uid)   header.uid = 0
   if (!header.gid)   header.gid = 0
   if (!header.mtime) header.mtime = new Date()

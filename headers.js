@@ -1,6 +1,7 @@
 var ZEROS = '0000000000000000000'
 var ZERO_OFFSET = '0'.charCodeAt(0)
 var USTAR = 'ustar\x0000'
+var MASK = parseInt('7777', 8)
 
 var clamp = function(index, len, defaultValue) {
   if (typeof index !== 'number') return defaultValue
@@ -166,7 +167,7 @@ exports.encode = function(opts) {
   if (opts.linkname && Buffer.byteLength(opts.linkname) > 100) return null
 
   buf.write(name)
-  buf.write(encodeOct(opts.mode & parseInt('07777', 8), 6), 100)
+  buf.write(encodeOct(opts.mode & MASK, 6), 100)
   buf.write(encodeOct(opts.uid, 6), 108)
   buf.write(encodeOct(opts.gid, 6), 116)
   buf.write(encodeOct(opts.size, 11), 124)
