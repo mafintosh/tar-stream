@@ -118,7 +118,7 @@ Pack.prototype.entry = function(header, buffer, callback) {
 
   if (!header.size)  header.size = 0
   if (!header.type)  header.type = modeToType(header.mode)
-  if (!header.mode)  header.mode = header.type === 'directory' ? 0755 : 0644
+  if (!header.mode)  header.mode = parseInt(header.type === 'directory' ? '0755' : '0644')
   if (!header.uid)   header.uid = 0
   if (!header.gid)   header.gid = 0
   if (!header.mtime) header.mtime = new Date()
