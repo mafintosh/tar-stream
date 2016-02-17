@@ -451,3 +451,16 @@ test('gnu long path', function (t) {
 
   extract.end(fs.readFileSync(fixtures.GNU_LONG_PATH))
 })
+
+test('base 256 uid and gid', function (t) {
+  t.plan(2)
+  var extract = tar.extract()
+
+  extract.on('entry', function (header, stream, callback) {
+    t.ok(header.uid === 116435139)
+    t.ok(header.gid === 1876110778)
+    callback()
+  })
+
+  extract.end(fs.readFileSync(fixtures.BASE_256_UID_GID))
+})
