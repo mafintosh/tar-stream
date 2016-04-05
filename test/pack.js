@@ -61,6 +61,31 @@ test('multi-file', function (t) {
   }))
 })
 
+test('pax', function (t) {
+  t.plan(2)
+
+  var pack = tar.pack()
+
+  pack.entry({
+    name: 'pax.txt',
+    mtime: new Date(1387580181000),
+    mode: parseInt('644', 8),
+    uname: 'maf',
+    gname: 'staff',
+    uid: 501,
+    gid: 20,
+    pax: {special: 'sauce'}
+  }, 'hello world\n')
+
+  pack.finalize()
+
+  pack.pipe(concat(function (data) {
+    // fs.writeFileSync('tmp.tar', data)
+    t.same(data.length & 511, 0)
+    t.deepEqual(data, fs.readFileSync(fixtures.PAX_TAR))
+  }))
+})
+
 test('types', function (t) {
   t.plan(2)
   var pack = tar.pack()
