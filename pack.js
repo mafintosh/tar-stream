@@ -204,15 +204,21 @@ Pack.prototype.destroy = function (err) {
 }
 
 Pack.prototype._encode = function (header) {
-  var buf = headers.encode(header)
-  if (buf) this.push(buf)
-  else this._encodePax(header)
+  if (!header.pax) {
+    var buf = headers.encode(header)
+    if (buf) {
+      this.push(buf)
+      return
+    }
+  }
+  this._encodePax(header)
 }
 
 Pack.prototype._encodePax = function (header) {
   var paxHeader = headers.encodePax({
     name: header.name,
-    linkname: header.linkname
+    linkname: header.linkname,
+    pax: header.pax
   })
 
   var newHeader = {
