@@ -152,7 +152,7 @@ Pack.prototype.entry = function (header, buffer, callback) {
 
   this._encode(header)
 
-  if (header.type !== 'file' && header.type !== 'contigious-file') {
+  if (header.type !== 'file' && header.type !== 'contiguous-file') {
     process.nextTick(callback)
     return new Void()
   }
