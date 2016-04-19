@@ -110,7 +110,8 @@ test('types', function (t) {
     uname: 'maf',
     gname: 'staff',
     uid: 501,
-    gid: 20
+    gid: 20,
+    size: 9  // Should convert to zero
   })
 
   pack.finalize()
