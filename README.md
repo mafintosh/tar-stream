@@ -131,3 +131,6 @@ pack.pipe(newTarballStream)
 
 [See tar-fs for a performance comparison with node-tar](https://github.com/mafintosh/tar-fs/blob/master/README.md#performance)
 
+# License
+
+MIT
