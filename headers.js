@@ -1,4 +1,5 @@
 var ZEROS = '0000000000000000000'
+var SEVENS = '7777777777777777777'
 var ZERO_OFFSET = '0'.charCodeAt(0)
 var USTAR = 'ustar\x0000'
 var MASK = parseInt('7777', 8)
@@ -92,7 +93,8 @@ var cksum = function (block) {
 
 var encodeOct = function (val, n) {
   val = val.toString(8)
-  return ZEROS.slice(0, n - val.length) + val + ' '
+  if (val.length > n) return SEVENS.slice(0, n) + ' '
+  else return ZEROS.slice(0, n - val.length) + val + ' '
 }
 
 /* Copied from the node-tar repo and modified to meet
