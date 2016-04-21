@@ -145,6 +145,29 @@ test('long-name', function (t) {
   }))
 })
 
+test('large-uid-gid', function (t) {
+  t.plan(2)
+  var pack = tar.pack()
+
+  pack.entry({
+    name: 'test.txt',
+    mtime: new Date(1387580181000),
+    mode: parseInt('644', 8),
+    uname: 'maf',
+    gname: 'staff',
+    uid: 1000000001,
+    gid: 1000000002
+  }, 'hello world\n')
+
+  pack.finalize()
+
+  pack.pipe(concat(function (data) {
+    t.same(data.length & 511, 0)
+    t.deepEqual(data, fs.readFileSync(fixtures.LARGE_UID_GID))
+    fs.writeFileSync('/tmp/foo', data)
+  }))
+})
+
 test('unicode', function (t) {
   t.plan(2)
   var pack = tar.pack()
