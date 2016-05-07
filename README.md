@@ -127,6 +127,40 @@ oldTarballStream.pipe(extract)
 pack.pipe(newTarballStream)
 ```
 
+## Saving tarball to fs
+
+
+``` js
+var fs = require('fs');
+var tar = require('tar-stream');
+
+var pack = tar.pack(); // pack is a streams2 stream
+var path = 'YourTarBall.tar';
+var yourTarball = fs.createWriteStream(path);
+
+// add a file called YourFile.txt with the content "Hello World!"
+pack.entry({
+    name: 'YourFile.txt'
+}, 'Hello World!', () => {
+    pack.finalize();
+});
+
+// pipe the pack stream to your file
+pack.pipe(yourTarball);
+
+yourTarball.on('close', () => {
+    console.log(path + ' has been written');
+    fs.stat(path, function(err, stats) {
+        if (err) {
+            return console.error(err);
+        }
+        console.log(stats);
+        console.log("Got file info successfully!");
+    });
+});
+
+```
+
 ## Performance
 
 [See tar-fs for a performance comparison with node-tar](https://github.com/mafintosh/tar-fs/blob/master/README.md#performance)
