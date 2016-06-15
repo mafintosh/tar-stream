@@ -75,6 +75,8 @@ extract.on('finish', function() {
 pack.pipe(extract)
 ```
 
+The tar archive is streamed sequentially, meaning you **must** drain each entry's stream as you get them or else the main extract stream will receive backpressure and stop reading.
+
 ## Headers
 
 The header object using in `entry` should contain the following properties.
