@@ -51,18 +51,18 @@ pack.pipe(process.stdout)
 
 ## Extracting
 
-To extract a stream use `tar.extract()` and listen for `extract.on('entry', header, stream, callback)`
+To extract a stream use `tar.extract()` and listen for `extract.on('entry', (header, stream, next) )`
 
 ``` js
 var extract = tar.extract()
 
-extract.on('entry', function(header, stream, callback) {
+extract.on('entry', function(header, stream, next) {
   // header is the tar header
   // stream is the content body (might be an empty stream)
   // call next when you are done with this entry
 
   stream.on('end', function() {
-    callback() // ready for next entry
+    next() // ready for next entry
   })
 
   stream.resume() // just auto drain the stream
