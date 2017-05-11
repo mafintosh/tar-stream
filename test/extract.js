@@ -503,3 +503,33 @@ test('base 256 uid and gid', function (t) {
 
   extract.end(fs.readFileSync(fixtures.BASE_256_UID_GID))
 })
+
+test('base 256 size', function (t) {
+  t.plan(2)
+
+  var extract = tar.extract()
+
+  extract.on('entry', function (header, stream, callback) {
+    t.deepEqual(header, {
+      name: 'test.txt',
+      mode: parseInt('644', 8),
+      uid: 501,
+      gid: 20,
+      size: 12,
+      mtime: new Date(1387580181000),
+      type: 'file',
+      linkname: null,
+      uname: 'maf',
+      gname: 'staff',
+      devmajor: 0,
+      devminor: 0
+    })
+    callback()
+  })
+
+  extract.on('finish', function () {
+    t.ok(true)
+  })
+
+  extract.end(fs.readFileSync(fixtures.BASE_256_SIZE))
+})
