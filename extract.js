@@ -66,7 +66,10 @@ var Extract = function (opts) {
 
   var onunlock = function (err) {
     self._locked = false
-    if (err) return self.destroy(err)
+    if (err) {
+      self.emit('error', err)
+      return self.destroy()
+    }
     if (!self._stream) oncontinue()
   }
 
