@@ -149,8 +149,8 @@ var decodeOct = function (val, offset, length) {
   }
 }
 
-var decodeStr = function (val, offset, length) {
-  return val.slice(offset, indexOf(val, 0, offset, offset + length)).toString()
+var decodeStr = function (val, offset, length, encoding) {
+  return val.slice(offset, indexOf(val, 0, offset, offset + length)).toString(encoding)
 }
 
 var addLength = function (str) {
@@ -161,8 +161,8 @@ var addLength = function (str) {
   return (len + digits) + str
 }
 
-exports.decodeLongPath = function (buf) {
-  return decodeStr(buf, 0, buf.length)
+exports.decodeLongPath = function (buf, encoding) {
+  return decodeStr(buf, 0, buf.length, encoding)
 }
 
 exports.encodePax = function (opts) { // TODO: encode more stuff in pax
@@ -240,23 +240,23 @@ exports.encode = function (opts) {
   return buf
 }
 
-exports.decode = function (buf) {
+exports.decode = function (buf, filenameEncoding) {
   var typeflag = buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET
 
-  var name = decodeStr(buf, 0, 100)
+  var name = decodeStr(buf, 0, 100, filenameEncoding)
   var mode = decodeOct(buf, 100, 8)
   var uid = decodeOct(buf, 108, 8)
   var gid = decodeOct(buf, 116, 8)
   var size = decodeOct(buf, 124, 12)
   var mtime = decodeOct(buf, 136, 12)
   var type = toType(typeflag)
-  var linkname = buf[157] === 0 ? null : decodeStr(buf, 157, 100)
+  var linkname = buf[157] === 0 ? null : decodeStr(buf, 157, 100, filenameEncoding)
   var uname = decodeStr(buf, 265, 32)
   var gname = decodeStr(buf, 297, 32)
   var devmajor = decodeOct(buf, 329, 8)
   var devminor = decodeOct(buf, 337, 8)
 
-  if (buf[345]) name = decodeStr(buf, 345, 155) + '/' + name
+  if (buf[345]) name = decodeStr(buf, 345, 155, filenameEncoding) + '/' + name
 
   // to support old tar versions that use trailing / to indicate dirs
   if (typeflag === 0 && name && name[name.length - 1] === '/') typeflag = 5

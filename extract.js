@@ -43,6 +43,8 @@ var Extract = function (opts) {
   if (!(this instanceof Extract)) return new Extract(opts)
   Writable.call(this, opts)
 
+  opts = opts || {}
+
   this._offset = 0
   this._buffer = bl()
   this._missing = 0
@@ -102,14 +104,14 @@ var Extract = function (opts) {
 
   var ongnulongpath = function () {
     var size = self._header.size
-    this._gnuLongPath = headers.decodeLongPath(b.slice(0, size))
+    this._gnuLongPath = headers.decodeLongPath(b.slice(0, size), opts.filenameEncoding)
     b.consume(size)
     onstreamend()
   }
 
   var ongnulonglinkpath = function () {
     var size = self._header.size
-    this._gnuLongLinkPath = headers.decodeLongPath(b.slice(0, size))
+    this._gnuLongLinkPath = headers.decodeLongPath(b.slice(0, size), opts.filenameEncoding)
     b.consume(size)
     onstreamend()
   }
@@ -118,7 +120,7 @@ var Extract = function (opts) {
     var offset = self._offset
     var header
     try {
-      header = self._header = headers.decode(b.slice(0, 512))
+      header = self._header = headers.decode(b.slice(0, 512), opts.filenameEncoding)
     } catch (err) {
       self.emit('error', err)
     }
