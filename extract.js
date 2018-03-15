@@ -22,6 +22,7 @@ var emptyStream = function (self, offset) {
 var mixinPax = function (header, pax) {
   if (pax.path) header.name = pax.path
   if (pax.linkpath) header.linkname = pax.linkpath
+  if (pax.size) header.size = parseInt(pax.size, 10)
   header.pax = pax
   return header
 }
