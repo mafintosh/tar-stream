@@ -562,13 +562,13 @@ test('huge', function (t) {
       mtime: new Date(1521214967000),
       name: 'huge.txt',
       pax: {
-          'LIBARCHIVE.creationtime': '1521214954',
-          'SCHILY.dev': '16777218',
-          'SCHILY.ino': '91584182',
-          'SCHILY.nlink': '1',
-          atime: '1521214969',
-          ctime: '1521214967',
-          size: hugeFileSize.toString()
+        'LIBARCHIVE.creationtime': '1521214954',
+        'SCHILY.dev': '16777218',
+        'SCHILY.ino': '91584182',
+        'SCHILY.nlink': '1',
+        atime: '1521214969',
+        ctime: '1521214967',
+        size: hugeFileSize.toString()
       },
       size: hugeFileSize,
       type: 'file',
