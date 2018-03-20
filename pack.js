@@ -11,8 +11,7 @@ var headers = require('./headers')
 var DMODE = parseInt('755', 8)
 var FMODE = parseInt('644', 8)
 
-var END_OF_TAR = new Buffer(1024)
-END_OF_TAR.fill(0)
+var END_OF_TAR = Buffer.alloc(1024)
 
 var noop = function () {}
 
