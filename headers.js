@@ -173,7 +173,7 @@ exports.encodePax = function (opts) { // TODO: encode more stuff in pax
       result += addLength(' ' + key + '=' + pax[key] + '\n')
     }
   }
-  return new Buffer(result)
+  return Buffer.from(result)
 }
 
 exports.decodePax = function (buf) {
