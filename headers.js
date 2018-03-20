@@ -72,9 +72,7 @@ var toTypeflag = function (flag) {
 }
 
 var alloc = function (size) {
-  var buf = new Buffer(size)
-  buf.fill(0)
-  return buf
+  return Buffer.alloc(size)
 }
 
 var indexOf = function (block, num, offset, end) {
