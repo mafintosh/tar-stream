@@ -78,13 +78,13 @@ var Extract = function (opts) {
     self._stream = null
     var drain = overflow(self._header.size)
     if (drain) self._parse(drain, ondrain)
-    else self._parse(512, onheader, true)
+    else self._parse(512, onheader)
     if (!self._locked) oncontinue()
   }
 
   var ondrain = function () {
     self._buffer.consume(overflow(self._header.size))
-    self._parse(512, onheader, true)
+    self._parse(512, onheader)
     oncontinue()
   }
 
@@ -128,7 +128,7 @@ var Extract = function (opts) {
     b.consume(512)
 
     if (!header) {
-      self._parse(512, onheader, true)
+      self._parse(512, onheader)
       oncontinue()
       return
     }
@@ -171,7 +171,7 @@ var Extract = function (opts) {
     self._locked = true
 
     if (!header.size || header.type === 'directory') {
-      self._parse(512, onheader, true)
+      self._parse(512, onheader)
       self.emit('entry', header, emptyStream(self, offset), onunlock)
       return
     }
@@ -182,8 +182,9 @@ var Extract = function (opts) {
     self._parse(header.size, onstreamend)
     oncontinue()
   }
+  this._onheader = onheader
 
-  this._parse(512, onheader, true)
+  this._parse(512, onheader)
 }
 
 util.inherits(Extract, Writable)
@@ -197,11 +198,11 @@ Extract.prototype.destroy = function (err) {
   if (this._stream) this._stream.emit('close')
 }
 
-Extract.prototype._parse = function (size, onparse, newentry) {
+Extract.prototype._parse = function (size, onparse) {
   if (this._destroyed) return
   this._offset += size
   this._missing = size
-  if (newentry) this._partial = false
+  if (onparse === this._onheader) this._partial = false
   this._onparse = onparse
 }
 
