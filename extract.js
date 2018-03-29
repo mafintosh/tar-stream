@@ -48,6 +48,7 @@ var Extract = function (opts) {
   this._offset = 0
   this._buffer = bl()
   this._missing = 0
+  this._partial = false
   this._onparse = noop
   this._header = null
   this._stream = null
@@ -77,13 +78,13 @@ var Extract = function (opts) {
     self._stream = null
     var drain = overflow(self._header.size)
     if (drain) self._parse(drain, ondrain)
-    else self._parse(512, onheader)
+    else self._parse(512, onheader, true)
     if (!self._locked) oncontinue()
   }
 
   var ondrain = function () {
     self._buffer.consume(overflow(self._header.size))
-    self._parse(512, onheader)
+    self._parse(512, onheader, true)
     oncontinue()
   }
 
@@ -127,7 +128,7 @@ var Extract = function (opts) {
     b.consume(512)
 
     if (!header) {
-      self._parse(512, onheader)
+      self._parse(512, onheader, true)
       oncontinue()
       return
     }
@@ -170,7 +171,7 @@ var Extract = function (opts) {
     self._locked = true
 
     if (!header.size || header.type === 'directory') {
-      self._parse(512, onheader)
+      self._parse(512, onheader, true)
       self.emit('entry', header, emptyStream(self, offset), onunlock)
       return
     }
@@ -182,7 +183,7 @@ var Extract = function (opts) {
     oncontinue()
   }
 
-  this._parse(512, onheader)
+  this._parse(512, onheader, true)
 }
 
 util.inherits(Extract, Writable)
@@ -196,10 +197,11 @@ Extract.prototype.destroy = function (err) {
   if (this._stream) this._stream.emit('close')
 }
 
-Extract.prototype._parse = function (size, onparse) {
+Extract.prototype._parse = function (size, onparse, newentry) {
   if (this._destroyed) return
   this._offset += size
   this._missing = size
+  if (newentry) this._partial = false
   this._onparse = onparse
 }
 
@@ -217,6 +219,7 @@ Extract.prototype._write = function (data, enc, cb) {
   var s = this._stream
   var b = this._buffer
   var missing = this._missing
+  if (data.length) this._partial = true
 
   // we do not reach end-of-chunk now. just forward it
 
@@ -244,6 +247,11 @@ Extract.prototype._write = function (data, enc, cb) {
 
   this._overflow = overflow
   this._onparse()
+}
+
+Extract.prototype._final = function (cb) {
+  if (this._partial) cb(new Error('unexpected end of data'))
+  cb()
 }
 
 module.exports = Extract
