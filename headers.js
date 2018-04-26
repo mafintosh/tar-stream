@@ -1,3 +1,6 @@
+var toBuffer = require('to-buffer')
+var alloc = require('buffer-alloc')
+
 var ZEROS = '0000000000000000000'
 var SEVENS = '7777777777777777777'
 var ZERO_OFFSET = '0'.charCodeAt(0)
@@ -69,12 +72,6 @@ var toTypeflag = function (flag) {
   }
 
   return 0
-}
-
-var alloc = function (size) {
-  var buf = new Buffer(size)
-  buf.fill(0)
-  return buf
 }
 
 var indexOf = function (block, num, offset, end) {
@@ -175,7 +172,7 @@ exports.encodePax = function (opts) { // TODO: encode more stuff in pax
       result += addLength(' ' + key + '=' + pax[key] + '\n')
     }
   }
-  return new Buffer(result)
+  return toBuffer(result)
 }
 
 exports.decodePax = function (buf) {
