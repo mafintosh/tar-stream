@@ -570,3 +570,23 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
 
   extract.end(fs.readFileSync(fixtures.LATIN1_TAR))
 })
+
+test('incomplete', function (t) {
+  t.plan(2)
+
+  var extract = tar.extract()
+
+  extract.on('entry', function (header, stream, callback) {
+    callback()
+  })
+
+  extract.on('error', function (err) {
+    t.same(err.message, 'unexpected end of data')
+  })
+
+  extract.on('finish', function () {
+    t.ok(true)
+  })
+
+  extract.end(fs.readFileSync(fixtures.INCOMPLETE_TAR))
+})
