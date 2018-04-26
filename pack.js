@@ -1,4 +1,4 @@
-var constants = require('constants')
+var constants = require('fs-constants')
 var eos = require('end-of-stream')
 var util = require('util')
 var alloc = require('buffer-alloc')

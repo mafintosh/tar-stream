@@ -10,7 +10,7 @@ test('huge', function (t) {
 
   var extract = tar.extract()
   var noEntries = false
-  var hugeFileSize = 8804630528  // ~8.2GB
+  var hugeFileSize = 8804630528 // ~8.2GB
   var dataLength = 0
 
   var countStream = new stream.Writable()

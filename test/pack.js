@@ -111,7 +111,7 @@ test('types', function (t) {
     gname: 'staff',
     uid: 501,
     gid: 20,
-    size: 9  // Should convert to zero
+    size: 9 // Should convert to zero
   })
 
   pack.finalize()

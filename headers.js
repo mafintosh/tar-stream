@@ -9,7 +9,7 @@ var MASK = parseInt('7777', 8)
 
 var clamp = function (index, len, defaultValue) {
   if (typeof index !== 'number') return defaultValue
-  index = ~~index  // Coerce to integer.
+  index = ~~index // Coerce to integer.
   if (index >= len) return len
   if (index >= 0) return index
   index += len
