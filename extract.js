@@ -182,8 +182,8 @@ var Extract = function (opts) {
     self._parse(header.size, onstreamend)
     oncontinue()
   }
-  this._onheader = onheader
 
+  this._onheader = onheader
   this._parse(512, onheader)
 }
 
@@ -251,7 +251,7 @@ Extract.prototype._write = function (data, enc, cb) {
 }
 
 Extract.prototype._final = function (cb) {
-  if (this._partial) cb(new Error('unexpected end of data'))
+  if (this._partial) return this.destroy(new Error('Unexpected end of data'))
   cb()
 }
 

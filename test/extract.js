@@ -572,7 +572,7 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
 })
 
 test('incomplete', function (t) {
-  t.plan(2)
+  t.plan(1)
 
   var extract = tar.extract()
 
@@ -581,11 +581,11 @@ test('incomplete', function (t) {
   })
 
   extract.on('error', function (err) {
-    t.same(err.message, 'unexpected end of data')
+    t.same(err.message, 'Unexpected end of data')
   })
 
   extract.on('finish', function () {
-    t.ok(true)
+    t.fail('should not finish')
   })
 
   extract.end(fs.readFileSync(fixtures.INCOMPLETE_TAR))
