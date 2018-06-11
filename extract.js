@@ -3,8 +3,8 @@ var bl = require('bl')
 var xtend = require('xtend')
 var headers = require('./headers')
 
-var Writable = require('readable-stream').Writable
-var PassThrough = require('readable-stream').PassThrough
+var Writable = require('stream').Writable || require('readable-stream').Writable
+var PassThrough = require('stream').PassThrough || require('readable-stream').PassThrough
 
 var noop = function () {}
 
