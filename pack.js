@@ -4,8 +4,8 @@ var util = require('util')
 var alloc = require('buffer-alloc')
 var toBuffer = require('to-buffer')
 
-var Readable = require('readable-stream').Readable
-var Writable = require('readable-stream').Writable
+var Readable = require('stream').Readable || require('readable-stream').Readable
+var Writable = require('stream').Writable || require('readable-stream').Writable
 var StringDecoder = require('string_decoder').StringDecoder
 
 var headers = require('./headers')
