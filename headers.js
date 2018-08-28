@@ -1,6 +1,3 @@
-var toBuffer = require('to-buffer')
-var alloc = require('buffer-alloc')
-
 var ZEROS = '0000000000000000000'
 var SEVENS = '7777777777777777777'
 var ZERO_OFFSET = '0'.charCodeAt(0)
@@ -172,7 +169,7 @@ exports.encodePax = function (opts) { // TODO: encode more stuff in pax
       result += addLength(' ' + key + '=' + pax[key] + '\n')
     }
   }
-  return toBuffer(result)
+  return Buffer.from(result)
 }
 
 exports.decodePax = function (buf) {
@@ -196,7 +193,7 @@ exports.decodePax = function (buf) {
 }
 
 exports.encode = function (opts) {
-  var buf = alloc(512)
+  var buf = Buffer.alloc(512)
   var name = opts.name
   var prefix = ''
 

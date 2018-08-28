@@ -1,8 +1,6 @@
 var constants = require('fs-constants')
 var eos = require('end-of-stream')
 var util = require('util')
-var alloc = require('buffer-alloc')
-var toBuffer = require('to-buffer')
 
 var Readable = require('readable-stream').Readable
 var Writable = require('readable-stream').Writable
@@ -13,7 +11,7 @@ var headers = require('./headers')
 var DMODE = parseInt('755', 8)
 var FMODE = parseInt('644', 8)
 
-var END_OF_TAR = alloc(1024)
+var END_OF_TAR = Buffer.alloc(1024)
 
 var noop = function () {}
 
@@ -125,7 +123,7 @@ Pack.prototype.entry = function (header, buffer, callback) {
   if (!header.gid) header.gid = 0
   if (!header.mtime) header.mtime = new Date()
 
-  if (typeof buffer === 'string') buffer = toBuffer(buffer)
+  if (typeof buffer === 'string') buffer = Buffer.from(buffer)
   if (Buffer.isBuffer(buffer)) {
     header.size = buffer.length
     this._encode(header)

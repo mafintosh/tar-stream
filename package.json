@@ -4,15 +4,13 @@
   "description": "tar-stream is a streaming tar parser and generator and nothing else. It is streams2 and operates purely using streams which means you can easily extract/parse tarballs without ever hitting the file system.",
   "author": "Mathias Buus <mathiasbuus@gmail.com>",
   "engines": {
-    "node": ">= 0.8.0"
+    "node": ">= 6.0.0"
   },
   "dependencies": {
-    "bl": "^1.0.0",
-    "buffer-alloc": "^1.1.0",
+    "bl": "^2.0.1",
     "end-of-stream": "^1.0.0",
     "fs-constants": "^1.0.0",
-    "readable-stream": "^2.3.0",
-    "to-buffer": "^1.1.0",
+    "readable-stream": "^3.0.2",
     "xtend": "^4.0.0"
   },
   "devDependencies": {
