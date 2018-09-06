@@ -11,7 +11,7 @@ var MASK = parseInt('7777', 8)
 var DIVIDEND_HIGH_32BIT = Math.pow(2, 32)
 
 var getUnisgnedHigh32 = function (val) {
-  return (val / DIVIDEND_HIGH_32BIT) >> 0
+  return (val / DIVIDEND_HIGH_32BIT) >>> 0
 }
 
 var getUnsignedLow32 = function (val) {
