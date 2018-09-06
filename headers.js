@@ -10,7 +10,7 @@ var MASK = parseInt('7777', 8)
 // Divide this number to get high 32 bit (JS unsafe)
 var DIVIDEND_HIGH_32BIT = Math.pow(2, 32)
 
-var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || (Math.pow(2, 53) - 1);
+var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || (Math.pow(2, 53) - 1)
 
 // isInteger polyfill
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
