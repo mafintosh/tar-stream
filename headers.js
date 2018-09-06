@@ -28,9 +28,9 @@ var MAX_OCT_SIZE = parseInt('77777777777', 8)
 
 // This function is unsafe, as JavaScript can only represent 53 bit.
 var makeSigned64 = function (high, low) {
-    if (high > MAX_SAFE_HIGH_INT32 || (high === MAX_SAFE_HIGH_INT32 && low > MAX_SAFE_LOW_UINT32)) {
-      throw new Error('unsafe gnu extension size')
-    }
+  if (high > MAX_SAFE_HIGH_INT32 || (high === MAX_SAFE_HIGH_INT32 && low > MAX_SAFE_LOW_UINT32)) {
+    throw new Error('unsafe gnu extension size')
+  }
   return (high * DIVIDEND_HIGH_32BIT) + low
 }
 
