@@ -10,10 +10,16 @@ var MASK = parseInt('7777', 8)
 // Divide this number to get high 32 bit (JS unsafe)
 var DIVIDEND_HIGH_32BIT = Math.pow(2, 32)
 
+// Number.isInteger polyfill
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
+var isInteger = Number.isInteger || function (value) {
+  return typeof value === 'number' && isFinite(value) && Math.floor(value) === value
+}
+
 // Number.isSafeInteger polyfill
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isSafeInteger
 var isSafeInteger = Number.isSafeInteger || function (value) {
-  return Number.isInteger(value) && Math.abs(value) <= Number.MAX_SAFE_INTEGER
+  return isInteger(value) && Math.abs(value) <= Number.MAX_SAFE_INTEGER
 }
 
 var getUnisgnedHigh32 = function (val) {
