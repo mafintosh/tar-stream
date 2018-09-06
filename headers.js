@@ -10,16 +10,18 @@ var MASK = parseInt('7777', 8)
 // Divide this number to get high 32 bit (JS unsafe)
 var DIVIDEND_HIGH_32BIT = Math.pow(2, 32)
 
-// Number.isInteger polyfill
+var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || (Math.pow(2, 53) - 1);
+
+// isInteger polyfill
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
 var isInteger = Number.isInteger || function (value) {
   return typeof value === 'number' && isFinite(value) && Math.floor(value) === value
 }
 
-// Number.isSafeInteger polyfill
+// isSafeInteger polyfill
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isSafeInteger
 var isSafeInteger = Number.isSafeInteger || function (value) {
-  return isInteger(value) && Math.abs(value) <= Number.MAX_SAFE_INTEGER
+  return isInteger(value) && Math.abs(value) <= MAX_SAFE_INTEGER
 }
 
 var getUnisgnedHigh32 = function (val) {
@@ -32,8 +34,8 @@ var getUnsignedLow32 = function (val) {
 
 // If there's 64 bit:
 // MAX_SAFE_INT64 = (MAX_SAFE_HIGH_INT32 << 32) | MAX_SAFE_LOW_UINT32
-var MAX_SAFE_HIGH_INT32 = getUnisgnedHigh32(Number.MAX_SAFE_INTEGER)
-var MAX_SAFE_LOW_UINT32 = getUnsignedLow32(Number.MAX_SAFE_INTEGER)
+var MAX_SAFE_HIGH_INT32 = getUnisgnedHigh32(MAX_SAFE_INTEGER)
+var MAX_SAFE_LOW_UINT32 = getUnsignedLow32(MAX_SAFE_INTEGER)
 
 // Max individual file size
 var MAX_OCT_SIZE = parseInt('77777777777', 8)
