@@ -7,6 +7,33 @@ var ZERO_OFFSET = '0'.charCodeAt(0)
 var USTAR = 'ustar\x0000'
 var MASK = parseInt('7777', 8)
 
+// Divide this number to get high 32 bit (JS unsafe)
+var DIVIDEND_HIGH_32BIT = Math.pow(2, 32)
+
+var getUnisgnedHigh32 = function (val) {
+  return (val / DIVIDEND_HIGH_32BIT) >> 0
+}
+
+var getUnsignedLow32 = function (val) {
+  return val >>> 0
+}
+
+// If there's 64 bit:
+// MAX_SAFE_INT64 = (MAX_SAFE_HIGH_INT32 << 32) | MAX_SAFE_LOW_UINT32
+var MAX_SAFE_HIGH_INT32 = getUnisgnedHigh32(Number.MAX_SAFE_INTEGER)
+var MAX_SAFE_LOW_UINT32 = getUnsignedLow32(Number.MAX_SAFE_INTEGER)
+
+// Max individual file size
+var MAX_OCT_SIZE = parseInt('77777777777', 8)
+
+// This function is unsafe, as JavaScript can only represent 53 bit.
+var makeSigned64 = function (high, low) {
+    if (high > MAX_SAFE_HIGH_INT32 || (high === MAX_SAFE_HIGH_INT32 && low > MAX_SAFE_LOW_UINT32)) {
+      throw new Error('unsafe gnu extension size')
+    }
+  return (high * DIVIDEND_HIGH_32BIT) + low
+}
+
 var clamp = function (index, len, defaultValue) {
   if (typeof index !== 'number') return defaultValue
   index = ~~index // Coerce to integer.
@@ -94,6 +121,25 @@ var encodeOct = function (val, n) {
   else return ZEROS.slice(0, n - val.length) + val + ' '
 }
 
+var writeEncodedSize = function (buf, offset, size, allowGnuExtension) {
+  // Try to use oct when size <= MAX_OCT_SIZE for max compatibility
+  // Then try gnu extension if enabled and can fit (uint32_be(0x80000000) + int64_be(size))
+  // Otherwise, use the old encodeOct routine.
+  // See 7-zip source, 7z1805-src.7z/CPP/7zip/Archive/Tar/TarIn.cpp#ParseSize
+  if (size > MAX_OCT_SIZE && Number.isSafeInteger(size) && allowGnuExtension) {
+    // writeUIntBE == writeUInt32BE in node < v10.0.0
+    // 0x80000000 GNU Extension Flag
+    buf.writeUInt32BE(0x80000000, offset)
+
+    // high.i32 is signed; low.i32 is unsigned
+    // if high.i32 is negative, writeInt32BE will throw an error refuse it.
+    buf.writeInt32BE(getUnisgnedHigh32(size), offset + 4)
+    buf.writeUInt32BE(getUnsignedLow32(size), offset + 8)
+  } else {
+    buf.write(encodeOct(size, 11), offset)
+  }
+}
+
 /* Copied from the node-tar repo and modified to meet
  * tar-stream coding standard.
  *
@@ -144,6 +190,18 @@ var decodeOct = function (val, offset, length) {
     if (end === offset) return 0
     return parseInt(val.slice(offset, end).toString(), 8)
   }
+}
+
+var decodeSize = function (val, offset) {
+  if (val.readUInt32BE(offset) === 0x80000000) {
+    // GNU extension
+    var high = val.readUInt32BE(offset + 4)
+    var low = val.readUInt32BE(offset + 8)
+    if (high === 0) return low
+    return makeSigned64(high, low)
+  }
+
+  return decodeOct(val, offset, 12)
 }
 
 var decodeStr = function (val, offset, length, encoding) {
@@ -217,7 +275,7 @@ exports.encode = function (opts) {
   buf.write(encodeOct(opts.mode & MASK, 6), 100)
   buf.write(encodeOct(opts.uid, 6), 108)
   buf.write(encodeOct(opts.gid, 6), 116)
-  buf.write(encodeOct(opts.size, 11), 124)
+  writeEncodedSize(buf, 124, opts.size, opts.allowGnuExtension === true)
   buf.write(encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136)
 
   buf[156] = ZERO_OFFSET + toTypeflag(opts.type)
@@ -244,7 +302,7 @@ exports.decode = function (buf, filenameEncoding) {
   var mode = decodeOct(buf, 100, 8)
   var uid = decodeOct(buf, 108, 8)
   var gid = decodeOct(buf, 116, 8)
-  var size = decodeOct(buf, 124, 12)
+  var size = decodeSize(buf, 124)
   var mtime = decodeOct(buf, 136, 12)
   var type = toType(typeflag)
   var linkname = buf[157] === 0 ? null : decodeStr(buf, 157, 100, filenameEncoding)

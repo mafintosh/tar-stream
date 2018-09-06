@@ -21,7 +21,7 @@
     "tape": "^4.9.0"
   },
   "scripts": {
-    "test": "standard && tape test/extract.js test/pack.js",
+    "test": "standard && tape test/extract.js test/pack.js test/gnu-size-header.js",
     "test-all": "standard && tape test/*.js"
   },
   "keywords": [
