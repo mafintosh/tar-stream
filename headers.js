@@ -24,7 +24,7 @@ var isSafeInteger = Number.isSafeInteger || function (value) {
   return isInteger(value) && Math.abs(value) <= MAX_SAFE_INTEGER
 }
 
-var getUnisgnedHigh32 = function (val) {
+var getUnsignedHigh32 = function (val) {
   return (val / DIVIDEND_HIGH_32BIT) >>> 0
 }
 
@@ -34,7 +34,7 @@ var getUnsignedLow32 = function (val) {
 
 // If there's 64 bit:
 // MAX_SAFE_INT64 = (MAX_SAFE_HIGH_INT32 << 32) | MAX_SAFE_LOW_UINT32
-var MAX_SAFE_HIGH_INT32 = getUnisgnedHigh32(MAX_SAFE_INTEGER)
+var MAX_SAFE_HIGH_INT32 = getUnsignedHigh32(MAX_SAFE_INTEGER)
 var MAX_SAFE_LOW_UINT32 = getUnsignedLow32(MAX_SAFE_INTEGER)
 
 // Max individual file size
@@ -147,7 +147,7 @@ var writeEncodedSize = function (buf, offset, size, allowGnuExtension) {
 
     // high.i32 is signed; low.i32 is unsigned
     // if high.i32 is negative, writeInt32BE will throw an error refuse it.
-    buf.writeInt32BE(getUnisgnedHigh32(size), offset + 4)
+    buf.writeInt32BE(getUnsignedHigh32(size), offset + 4)
     buf.writeUInt32BE(getUnsignedLow32(size), offset + 8)
   } else {
     buf.write(encodeOct(size, 11), offset)
