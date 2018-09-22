@@ -8,11 +8,11 @@
   },
   "dependencies": {
     "bl": "^1.0.0",
-    "buffer-alloc": "^1.1.0",
+    "buffer-alloc": "^1.2.0",
     "end-of-stream": "^1.0.0",
     "fs-constants": "^1.0.0",
     "readable-stream": "^2.3.0",
-    "to-buffer": "^1.1.0",
+    "to-buffer": "^1.1.1",
     "xtend": "^4.0.0"
   },
   "devDependencies": {
