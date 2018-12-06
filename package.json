@@ -7,7 +7,7 @@
     "node": ">= 0.8.0"
   },
   "dependencies": {
-    "bl": "^1.0.0",
+    "bl": "^2.1.2",
     "buffer-alloc": "^1.2.0",
     "end-of-stream": "^1.0.0",
     "fs-constants": "^1.0.0",
