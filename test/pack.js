@@ -74,7 +74,7 @@ test('pax', function (t) {
     gname: 'staff',
     uid: 501,
     gid: 20,
-    pax: {special: 'sauce'}
+    pax: { special: 'sauce' }
   }, 'hello world\n')
 
   pack.finalize()
