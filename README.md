@@ -65,7 +65,7 @@ extract.on('entry', function(header, stream, next) {
     next() // ready for next entry
   })
 
-  stream.resume() // just auto drain the stream
+  return stream.resume() // just auto drain the stream
 })
 
 extract.on('finish', function() {
