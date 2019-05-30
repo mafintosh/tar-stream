@@ -590,3 +590,92 @@ test('incomplete', function (t) {
 
   extract.end(fs.readFileSync(fixtures.INCOMPLETE_TAR))
 })
+
+test('gnu', function (t) { // can correctly unpack gnu-tar format
+  t.plan(3)
+
+  var extract = tar.extract()
+  var noEntries = false
+
+  extract.on('entry', function (header, stream, callback) {
+    t.deepEqual(header, {
+      name: 'test.txt',
+      mode: parseInt('644', 8),
+      uid: 12345,
+      gid: 67890,
+      size: 14,
+      mtime: new Date(1559239869000),
+      type: 'file',
+      linkname: null,
+      uname: 'myuser',
+      gname: 'mygroup',
+      devmajor: 0,
+      devminor: 0
+    })
+
+    stream.pipe(concat(function (data) {
+      noEntries = true
+      t.same(data.toString(), 'Hello, world!\n')
+      callback()
+    }))
+  })
+
+  extract.on('finish', function () {
+    t.ok(noEntries)
+  })
+
+  extract.end(fs.readFileSync(fixtures.GNU_TAR))
+})
+
+test('gnu-incremental', function (t) {
+  // can correctly unpack gnu-tar incremental format. In this situation,
+  // the tarball will have additional ctime and atime values in the header,
+  // and without awareness of the 'gnu' tar format, the atime (offset 345) is mistaken
+  // for a directory prefix (also offset 345).
+  t.plan(3)
+
+  var extract = tar.extract()
+  var noEntries = false
+
+  extract.on('entry', function (header, stream, callback) {
+    t.deepEqual(header, {
+      name: 'test.txt',
+      mode: parseInt('644', 8),
+      uid: 12345,
+      gid: 67890,
+      size: 14,
+      mtime: new Date(1559239869000),
+      type: 'file',
+      linkname: null,
+      uname: 'myuser',
+      gname: 'mygroup',
+      devmajor: 0,
+      devminor: 0
+    })
+
+    stream.pipe(concat(function (data) {
+      noEntries = true
+      t.same(data.toString(), 'Hello, world!\n')
+      callback()
+    }))
+  })
+
+  extract.on('finish', function () {
+    t.ok(noEntries)
+  })
+
+  extract.end(fs.readFileSync(fixtures.GNU_INCREMENTAL_TAR))
+})
+
+test('v7 unsupported', function (t) { // correctly fails to parse v7 tarballs
+  t.plan(1)
+
+  var extract = tar.extract()
+
+  extract.on('error', function (err) {
+    t.ok(!!err)
+    extract.destroy()
+  })
+
+  extract.end(fs.readFileSync(fixtures.V7_TAR))
+})

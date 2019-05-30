@@ -17,3 +17,9 @@ exports.BASE_256_SIZE = path.join(__dirname, 'base-256-size.tar')
 exports.HUGE = path.join(__dirname, 'huge.tar.gz')
 exports.LATIN1_TAR = path.join(__dirname, 'latin1.tar')
 exports.INCOMPLETE_TAR = path.join(__dirname, 'incomplete.tar')
+// Created using gnu tar: tar cf gnu-incremental.tar --format gnu --owner=myuser:12345 --group=mygroup:67890 test.txt
+exports.GNU_TAR = path.join(__dirname, 'gnu.tar')
+// Created using gnu tar: tar cf gnu-incremental.tar -G --format gnu --owner=myuser:12345 --group=mygroup:67890 test.txt
+exports.GNU_INCREMENTAL_TAR = path.join(__dirname, 'gnu-incremental.tar')
+// Created using gnu tar: tar cf v7.tar --format v7 test.txt
+exports.V7_TAR = path.join(__dirname, 'v7.tar')
