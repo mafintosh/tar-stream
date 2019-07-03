@@ -205,7 +205,6 @@ exports.encode = function (opts) {
   var prefix = ''
 
   if (opts.typeflag === 5 && name[name.length - 1] !== '/') name += '/'
-  if (Buffer.byteLength(name) !== name.length) return null // utf-8
 
   while (Buffer.byteLength(name) > 100) {
     var i = name.indexOf('/')
