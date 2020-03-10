@@ -193,26 +193,26 @@ test('unicode', function (t) {
 })
 
 test('backpressure', function (t) {
-  // t.plan(2)
   var slowWritable = new Writable({ highWaterMark: 1 })
   slowWritable._write = (chunk, enc, next) => {
-    process.stdout.write('.')
-    setTimeout(next, 100)
+    setImmediate(next)
   }
 
   var pack = tar.pack()
+  var later = false
+  
+  setImmediate(() => {
+    later = true
+  })
 
   pack.pipe(slowWritable)
 
-  slowWritable.on('finish', () => {
-    t.end()
-  })
+  slowWritable.on('finish', () => t.end())
+  pack.on('end', () => t.ok(later))
 
   var i = 0
   var next = () => {
     if (++i < 25) {
-      console.error('queue', i)
-
       var header = {
         name: `file${i}.txt`,
         mtime: new Date(1387580181000),
@@ -223,12 +223,10 @@ test('backpressure', function (t) {
         gid: 20
       }
 
-      var buffer = 'hello\n'
+      var buffer = Buffer.alloc(1024)
 
       pack.entry(header, buffer, next)
-      // console.error(pack._readableState.buffer.length)
     } else {
-      console.error('finalize', i)
       pack.finalize()
     }
   }
