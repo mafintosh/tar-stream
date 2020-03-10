@@ -3,6 +3,7 @@ var tar = require('../index')
 var fixtures = require('./fixtures')
 var concat = require('concat-stream')
 var fs = require('fs')
+var Writable = require('readable-stream').Writable
 
 test('one-file', function (t) {
   t.plan(2)
@@ -189,4 +190,48 @@ test('unicode', function (t) {
     t.equal(data.length & 511, 0)
     t.deepEqual(data, fs.readFileSync(fixtures.UNICODE_TAR))
   }))
+})
+
+test('backpressure', function (t) {
+  // t.plan(2)
+  var slowWritable = new Writable({ highWaterMark: 1 })
+  slowWritable._write = (chunk, enc, next) => {
+    process.stdout.write('.')
+    setTimeout(next, 100)
+  }
+
+  var pack = tar.pack()
+
+  pack.pipe(slowWritable)
+
+  slowWritable.on('finish', () => {
+    t.end()
+  })
+
+  var i = 0
+  var next = () => {
+    if (++i < 25) {
+      console.error('queue', i)
+
+      var header = {
+        name: `file${i}.txt`,
+        mtime: new Date(1387580181000),
+        mode: parseInt('644', 8),
+        uname: 'maf',
+        gname: 'staff',
+        uid: 501,
+        gid: 20
+      }
+
+      var buffer = 'hello\n'
+
+      pack.entry(header, buffer, next)
+      // console.error(pack._readableState.buffer.length)
+    } else {
+      console.error('finalize', i)
+      pack.finalize()
+    }
+  }
+
+  next()
 })
