@@ -200,7 +200,7 @@ test('backpressure', function (t) {
 
   var pack = tar.pack()
   var later = false
-  
+
   setImmediate(() => {
     later = true
   })
