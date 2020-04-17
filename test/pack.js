@@ -233,3 +233,11 @@ test('backpressure', function (t) {
 
   next()
 })
+
+test('bigentry', function (t) {
+  t.timeoutAfter(30 * 1000)
+  const pack = tar.pack()
+  const entry = pack.entry({ name: 'file' }, Buffer.alloc(65400), () => {
+    t.end()
+  })
+})
