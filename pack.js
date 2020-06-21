@@ -1,18 +1,19 @@
 var constants = require('fs-constants')
 var eos = require('end-of-stream')
 var inherits = require('inherits')
-var alloc = Buffer.alloc
+var bufferAlloc = require('buffer-alloc')
 
-var Readable = require('readable-stream').Readable
-var Writable = require('readable-stream').Writable
+var Readable = require('stream').Readable || require('readable-stream').Readable
+var Writable = require('stream').Writable || require('readable-stream').Writable
 var StringDecoder = require('string_decoder').StringDecoder
 
 var headers = require('./headers')
+var bufferFrom = require('./Buffer/from')
 
 var DMODE = parseInt('755', 8)
 var FMODE = parseInt('644', 8)
 
-var END_OF_TAR = alloc(1024)
+var END_OF_TAR = bufferAlloc(1024)
 
 var noop = function () {}
 
@@ -124,7 +125,7 @@ Pack.prototype.entry = function (header, buffer, callback) {
   if (!header.gid) header.gid = 0
   if (!header.mtime) header.mtime = new Date()
 
-  if (typeof buffer === 'string') buffer = Buffer.from(buffer)
+  if (typeof buffer === 'string') buffer = bufferFrom(buffer)
   if (Buffer.isBuffer(buffer)) {
     header.size = buffer.length
     this._encode(header)

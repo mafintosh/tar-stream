@@ -1,12 +1,14 @@
-var alloc = Buffer.alloc
+var bufferAlloc = require('buffer-alloc')
+var bufferFrom = require('./Buffer/from')
+var bufferCompare = require('./Buffer/compare')
 
 var ZEROS = '0000000000000000000'
 var SEVENS = '7777777777777777777'
 var ZERO_OFFSET = '0'.charCodeAt(0)
-var USTAR_MAGIC = Buffer.from('ustar\x00', 'binary')
-var USTAR_VER = Buffer.from('00', 'binary')
-var GNU_MAGIC = Buffer.from('ustar\x20', 'binary')
-var GNU_VER = Buffer.from('\x20\x00', 'binary')
+var USTAR_MAGIC = bufferFrom('ustar\x00', 'binary')
+var USTAR_VER = bufferFrom('00', 'binary')
+var GNU_MAGIC = bufferFrom('ustar\x20', 'binary')
+var GNU_VER = bufferFrom('\x20\x00', 'binary')
 var MASK = parseInt('7777', 8)
 var MAGIC_OFFSET = 257
 var VERSION_OFFSET = 263
@@ -171,7 +173,7 @@ exports.encodePax = function (opts) { // TODO: encode more stuff in pax
       result += addLength(' ' + key + '=' + pax[key] + '\n')
     }
   }
-  return Buffer.from(result)
+  return bufferFrom(result)
 }
 
 exports.decodePax = function (buf) {
@@ -195,7 +197,7 @@ exports.decodePax = function (buf) {
 }
 
 exports.encode = function (opts) {
-  var buf = alloc(512)
+  var buf = bufferAlloc(512)
   var name = opts.name
   var prefix = ''
 
@@ -261,12 +263,12 @@ exports.decode = function (buf, filenameEncoding) {
   // valid checksum
   if (c !== decodeOct(buf, 148, 8)) throw new Error('Invalid tar header. Maybe the tar is corrupted or it needs to be gunzipped?')
 
-  if (USTAR_MAGIC.compare(buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0) {
+  // if (bufferCompare(USTAR_MAGIC, buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0) {
+  if (bufferCompare(USTAR_MAGIC, buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0) {
     // ustar (posix) format.
     // prepend prefix, if present.
     if (buf[345]) name = decodeStr(buf, 345, 155, filenameEncoding) + '/' + name
-  } else if (GNU_MAGIC.compare(buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0 &&
-             GNU_VER.compare(buf, VERSION_OFFSET, VERSION_OFFSET + 2) === 0) {
+  } else if (bufferCompare(GNU_MAGIC, buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0 && bufferCompare(GNU_VER, buf, VERSION_OFFSET, VERSION_OFFSET + 2) === 0) {
     // 'gnu'/'oldgnu' format. Similar to ustar, but has support for incremental and
     // multi-volume tarballs.
   } else {
@@ -277,17 +279,17 @@ exports.decode = function (buf, filenameEncoding) {
   if (typeflag === 0 && name && name[name.length - 1] === '/') typeflag = 5
 
   return {
-    name,
-    mode,
-    uid,
-    gid,
-    size,
+    name: name,
+    mode: mode,
+    uid: uid,
+    gid: gid,
+    size: size,
     mtime: new Date(1000 * mtime),
-    type,
-    linkname,
-    uname,
-    gname,
-    devmajor,
-    devminor
+    type: type,
+    linkname: linkname,
+    uname: uname,
+    gname: gname,
+    devmajor: devmajor,
+    devminor: devminor
   }
 }

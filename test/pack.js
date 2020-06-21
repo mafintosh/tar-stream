@@ -3,7 +3,9 @@ var tar = require('../index')
 var fixtures = require('./fixtures')
 var concat = require('concat-stream')
 var fs = require('fs')
-var Writable = require('readable-stream').Writable
+var Writable = require('stream').Writable || require('readable-stream').Writable
+var bufferAlloc = require('buffer-alloc')
+var nextTick = require('next-tick')
 
 test('one-file', function (t) {
   t.plan(2)
@@ -194,27 +196,27 @@ test('unicode', function (t) {
 
 test('backpressure', function (t) {
   var slowWritable = new Writable({ highWaterMark: 1 })
-  slowWritable._write = (chunk, enc, next) => {
-    setImmediate(next)
+  slowWritable._write = function (chunk, enc, next) {
+    nextTick(next)
   }
 
   var pack = tar.pack()
   var later = false
 
-  setImmediate(() => {
+  nextTick(function () {
     later = true
   })
 
   pack.pipe(slowWritable)
 
-  slowWritable.on('finish', () => t.end())
-  pack.on('end', () => t.ok(later))
+  slowWritable.on('finish', function () { t.end() })
+  pack.on('end', function () { t.ok(later) })
 
   var i = 0
-  var next = () => {
+  var next = function () {
     if (++i < 25) {
       var header = {
-        name: `file${i}.txt`,
+        name: 'file' + i + '.txt',
         mtime: new Date(1387580181000),
         mode: parseInt('644', 8),
         uname: 'maf',
@@ -223,7 +225,7 @@ test('backpressure', function (t) {
         gid: 20
       }
 
-      var buffer = Buffer.alloc(1024)
+      var buffer = bufferAlloc(1024)
 
       pack.entry(header, buffer, next)
     } else {

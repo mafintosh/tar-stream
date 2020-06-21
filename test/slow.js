@@ -1,21 +1,27 @@
 var test = require('tape')
-var stream = require('readable-stream')
+var Writable = require('stream').Writable || require('readable-stream').Writable
 var zlib = require('zlib')
 var fs = require('fs')
+var log = require('single-line-log2').stdout
 var tar = require('../')
 var fixtures = require('./fixtures')
 
-test('huge', function (t) {
-  t.plan(1)
+test.skip('huge', function (t) {
+  t.plan(3)
 
   var extract = tar.extract()
   var noEntries = false
   var hugeFileSize = 8804630528 // ~8.2GB
   var dataLength = 0
 
-  var countStream = new stream.Writable()
+  var countStream = new Writable()
   countStream._write = function (chunk, encoding, done) {
     dataLength += chunk.length
+    log(dataLength)
+    done()
+  }
+  countStream._flush = function (done) {
+    console.log('')
     done()
   }
 
@@ -46,7 +52,7 @@ test('huge', function (t) {
     })
 
     noEntries = true
-    stream.pipe(countStream)
+    stream.pipe(countStream).on('error', callback).on('finish', callback)
   })
 
   extract.on('finish', function () {

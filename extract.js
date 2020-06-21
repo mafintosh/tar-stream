@@ -2,8 +2,9 @@ var util = require('util')
 var bl = require('bl')
 var headers = require('./headers')
 
-var Writable = require('readable-stream').Writable
-var PassThrough = require('readable-stream').PassThrough
+var major = +process.versions.node.split('.')[0]
+var Writable = major <= 6 ? require('readable-stream').Writable : require('stream').Writable
+var PassThrough = require('stream').PassThrough || require('readable-stream').PassThrough
 
 var noop = function () {}
 
@@ -28,6 +29,7 @@ var mixinPax = function (header, pax) {
 
 var Source = function (self, offset) {
   this._parent = self
+  this._parent.retain()
   this.offset = offset
   PassThrough.call(this)
 }
@@ -35,13 +37,15 @@ var Source = function (self, offset) {
 util.inherits(Source, PassThrough)
 
 Source.prototype.destroy = function (err) {
-  this._parent.destroy(err)
+  if (this._parent) {
+    this._parent.release(err)
+    this._parent = null
+  }
 }
 
 var Extract = function (opts) {
   if (!(this instanceof Extract)) return new Extract(opts)
   Writable.call(this, opts)
-
   opts = opts || {}
 
   this._offset = 0
@@ -59,6 +63,7 @@ var Extract = function (opts) {
   this._paxGlobal = null
   this._gnuLongPath = null
   this._gnuLongLinkPath = null
+  this._refCount = 1
 
   var self = this
   var b = self._buffer
@@ -188,10 +193,22 @@ var Extract = function (opts) {
 
 util.inherits(Extract, Writable)
 
+Extract.prototype.retain = function () {
+  if (this._destroyed) throw new Error('retain called on destroyed')
+  this._refCount++
+}
+
+Extract.prototype.release = function (err) {
+  if (this._refCount <= 1) throw new Error('Reference count corrupted')
+  this._error = this._error || err
+  this._refCount--
+  if (this._refCount > 0) return
+  if (!this._destroyed) this.destroy(this._error)
+}
+
 Extract.prototype.destroy = function (err) {
   if (this._destroyed) return
   this._destroyed = true
-
   if (err) this.emit('error', err)
   this.emit('close')
   if (this._stream) this._stream.emit('close')
