@@ -3,3 +3,28 @@ node_js:
   - '6'
   - '8'
   - '10'
+  - '12'
+  - '14'
+
+jobs:
+  include:
+    - node_js: 14
+      env: READABLE_STREAM=disable
+    - node_js: 14
+
+    - node_js: 12
+      env: READABLE_STREAM=disable
+    - node_js: 12
+
+    - node_js: 10
+      env: READABLE_STREAM=disable
+    - node_js: 10
+
+    - node_js: 8
+      env: READABLE_STREAM=disable
+    - node_js: 8
+
+#   Using native streams on node@6 breaks
+#    - node_js: 6
+#      env: READABLE_STREAM=disable
+    - node_js: 6
