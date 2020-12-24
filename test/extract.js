@@ -679,3 +679,77 @@ test('v7 unsupported', function (t) { // correctly fails to parse v7 tarballs
 
   extract.end(fs.readFileSync(fixtures.V7_TAR))
 })
+
+test('unknown format doesn\'t extract by default', function (t) {
+  t.plan(1)
+
+  var extract = tar.extract()
+
+  extract.on('error', function (err) {
+    t.ok(!!err)
+    extract.destroy()
+  })
+
+  extract.end(fs.readFileSync(fixtures.UNKNOWN_FORMAT))
+})
+
+test('unknown format attempts to extract if allowed', function (t) {
+  t.plan(5)
+
+  var extract = tar.extract({ allowUnknownFormat: true })
+  var noEntries = false
+
+  var onfile1 = function (header, stream, callback) {
+    t.deepEqual(header, {
+      name: 'file-1.txt',
+      mode: parseInt('644', 8),
+      uid: 501,
+      gid: 20,
+      size: 12,
+      mtime: new Date(1387580181000),
+      type: 'file',
+      linkname: null,
+      uname: 'maf',
+      gname: 'staff',
+      devmajor: 0,
+      devminor: 0
+    })
+
+    extract.on('entry', onfile2)
+    stream.pipe(concat(function (data) {
+      t.same(data.toString(), 'i am file-1\n')
+      callback()
+    }))
+  }
+
+  var onfile2 = function (header, stream, callback) {
+    t.deepEqual(header, {
+      name: 'file-2.txt',
+      mode: parseInt('644', 8),
+      uid: 501,
+      gid: 20,
+      size: 12,
+      mtime: new Date(1387580181000),
+      type: 'file',
+      linkname: null,
+      uname: 'maf',
+      gname: 'staff',
+      devmajor: 0,
+      devminor: 0
+    })
+
+    stream.pipe(concat(function (data) {
+      noEntries = true
+      t.same(data.toString(), 'i am file-2\n')
+      callback()
+    }))
+  }
+
+  extract.once('entry', onfile1)
+
+  extract.on('finish', function () {
+    t.ok(noEntries)
+  })
+
+  extract.end(fs.readFileSync(fixtures.UNKNOWN_FORMAT))
+})

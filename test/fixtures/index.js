@@ -21,5 +21,7 @@ exports.INCOMPLETE_TAR = path.join(__dirname, 'incomplete.tar')
 exports.GNU_TAR = path.join(__dirname, 'gnu.tar')
 // Created using gnu tar: tar cf gnu-incremental.tar -G --format gnu --owner=myuser:12345 --group=mygroup:67890 test.txt
 exports.GNU_INCREMENTAL_TAR = path.join(__dirname, 'gnu-incremental.tar')
+// Created from multi-file.tar, removing the magic and recomputing the checksum
+exports.UNKNOWN_FORMAT = path.join(__dirname, 'unknown-format.tar')
 // Created using gnu tar: tar cf v7.tar --format v7 test.txt
 exports.V7_TAR = path.join(__dirname, 'v7.tar')
