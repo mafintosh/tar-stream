@@ -7,7 +7,6 @@
     "bl": "^4.0.3",
     "end-of-stream": "^1.4.1",
     "fs-constants": "^1.0.0",
-    "inherits": "^2.0.3",
     "readable-stream": "^3.1.1"
   },
   "devDependencies": {
