@@ -92,10 +92,26 @@ var cksum = function (block) {
   return sum
 }
 
+var encodeSizeBin = function (num, buf, off) {
+  buf[off] = 0x80
+  for (var i = 11; i > 0; i--) {
+    buf[off + i] = num & 0xff
+    num = Math.floor(num / 0x100)
+  }
+}
+
 var encodeOct = function (val, n) {
   val = val.toString(8)
   if (val.length > n) return SEVENS.slice(0, n) + ' '
   else return ZEROS.slice(0, n - val.length) + val + ' '
+}
+
+var encodeSize = function (num, buf, off) {
+  if (num.toString(8).length > 11) {
+    encodeSizeBin(num, buf, off)
+  } else {
+    buf.write(encodeOct(num, 11), off)
+  }
 }
 
 /* Copied from the node-tar repo and modified to meet
@@ -216,7 +232,7 @@ exports.encode = function (opts) {
   buf.write(encodeOct(opts.mode & MASK, 6), 100)
   buf.write(encodeOct(opts.uid, 6), 108)
   buf.write(encodeOct(opts.gid, 6), 116)
-  buf.write(encodeOct(opts.size, 11), 124)
+  encodeSize(opts.size, buf, 124)
   buf.write(encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136)
 
   buf[156] = ZERO_OFFSET + toTypeflag(opts.type)
