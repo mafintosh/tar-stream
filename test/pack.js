@@ -168,7 +168,6 @@ test('large-uid-gid', function (t) {
   pack.pipe(concat(function (data) {
     t.is(data.length & 511, 0)
     t.alike(data, fs.readFileSync(fixtures.LARGE_UID_GID))
-    fs.writeFileSync('/tmp/foo', data)
   }))
 })
 
