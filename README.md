@@ -1,6 +1,6 @@
 # tar-stream
 
-tar-stream is a streaming tar parser and generator and nothing else. It is streams2 and operates purely using streams which means you can easily extract/parse tarballs without ever hitting the file system.
+tar-stream is a streaming tar parser and generator and nothing else. It operates purely using streams which means you can easily extract/parse tarballs without ever hitting the file system.
 
 Note that you still need to gunzip your data if you have a `.tar.gz`. We recommend using [gunzip-maybe](https://github.com/mafintosh/gunzip-maybe) in conjunction with this.
 
@@ -28,7 +28,7 @@ To create a pack stream use `tar.pack()` and call `pack.entry(header, [callback]
 
 ``` js
 var tar = require('tar-stream')
-var pack = tar.pack() // pack is a streams2 stream
+var pack = tar.pack() // pack is a stream
 
 // add a file called my-test.txt with the content "Hello World!"
 pack.entry({ name: 'my-test.txt' }, 'Hello World!')
@@ -136,7 +136,7 @@ pack.pipe(newTarballStream)
 var fs = require('fs')
 var tar = require('tar-stream')
 
-var pack = tar.pack() // pack is a streams2 stream
+var pack = tar.pack() // pack is a stream
 var path = 'YourTarBall.tar'
 var yourTarball = fs.createWriteStream(path)
 

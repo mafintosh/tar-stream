@@ -1,14 +1,14 @@
-var test = require('tape')
-var tar = require('../index')
-var fixtures = require('./fixtures')
-var concat = require('concat-stream')
-var fs = require('fs')
-var Writable = require('readable-stream').Writable
+const test = require('brittle')
+const concat = require('concat-stream')
+const fs = require('fs')
+const { Writable } = require('streamx')
+const tar = require('..')
+const fixtures = require('./fixtures')
 
 test('one-file', function (t) {
   t.plan(2)
 
-  var pack = tar.pack()
+  const pack = tar.pack()
 
   pack.entry({
     name: 'test.txt',
@@ -23,15 +23,15 @@ test('one-file', function (t) {
   pack.finalize()
 
   pack.pipe(concat(function (data) {
-    t.same(data.length & 511, 0)
-    t.deepEqual(data, fs.readFileSync(fixtures.ONE_FILE_TAR))
+    t.is(data.length & 511, 0)
+    t.alike(data, fs.readFileSync(fixtures.ONE_FILE_TAR))
   }))
 })
 
 test('multi-file', function (t) {
   t.plan(2)
 
-  var pack = tar.pack()
+  const pack = tar.pack()
 
   pack.entry({
     name: 'file-1.txt',
@@ -57,15 +57,15 @@ test('multi-file', function (t) {
   pack.finalize()
 
   pack.pipe(concat(function (data) {
-    t.same(data.length & 511, 0)
-    t.deepEqual(data, fs.readFileSync(fixtures.MULTI_FILE_TAR))
+    t.is(data.length & 511, 0)
+    t.alike(data, fs.readFileSync(fixtures.MULTI_FILE_TAR))
   }))
 })
 
 test('pax', function (t) {
   t.plan(2)
 
-  var pack = tar.pack()
+  const pack = tar.pack()
 
   pack.entry({
     name: 'pax.txt',
@@ -81,15 +81,15 @@ test('pax', function (t) {
   pack.finalize()
 
   pack.pipe(concat(function (data) {
-    // fs.writeFileSync('tmp.tar', data)
-    t.same(data.length & 511, 0)
-    t.deepEqual(data, fs.readFileSync(fixtures.PAX_TAR))
+    t.is(data.length & 511, 0)
+    t.alike(data, fs.readFileSync(fixtures.PAX_TAR))
   }))
 })
 
 test('types', function (t) {
   t.plan(2)
-  var pack = tar.pack()
+
+  const pack = tar.pack()
 
   pack.entry({
     name: 'directory',
@@ -118,14 +118,15 @@ test('types', function (t) {
   pack.finalize()
 
   pack.pipe(concat(function (data) {
-    t.equal(data.length & 511, 0)
-    t.deepEqual(data, fs.readFileSync(fixtures.TYPES_TAR))
+    t.is(data.length & 511, 0)
+    t.alike(data, fs.readFileSync(fixtures.TYPES_TAR))
   }))
 })
 
 test('long-name', function (t) {
   t.plan(2)
-  var pack = tar.pack()
+
+  const pack = tar.pack()
 
   pack.entry({
     name: 'my/file/is/longer/than/100/characters/and/should/use/the/prefix/header/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/filename.txt',
@@ -141,14 +142,15 @@ test('long-name', function (t) {
   pack.finalize()
 
   pack.pipe(concat(function (data) {
-    t.equal(data.length & 511, 0)
-    t.deepEqual(data, fs.readFileSync(fixtures.LONG_NAME_TAR))
+    t.is(data.length & 511, 0)
+    t.alike(data, fs.readFileSync(fixtures.LONG_NAME_TAR))
   }))
 })
 
 test('large-uid-gid', function (t) {
   t.plan(2)
-  var pack = tar.pack()
+
+  const pack = tar.pack()
 
   pack.entry({
     name: 'test.txt',
@@ -163,15 +165,16 @@ test('large-uid-gid', function (t) {
   pack.finalize()
 
   pack.pipe(concat(function (data) {
-    t.same(data.length & 511, 0)
-    t.deepEqual(data, fs.readFileSync(fixtures.LARGE_UID_GID))
+    t.is(data.length & 511, 0)
+    t.alike(data, fs.readFileSync(fixtures.LARGE_UID_GID))
     fs.writeFileSync('/tmp/foo', data)
   }))
 })
 
 test('unicode', function (t) {
   t.plan(2)
-  var pack = tar.pack()
+
+  const pack = tar.pack()
 
   pack.entry({
     name: 'høstål.txt',
@@ -187,33 +190,39 @@ test('unicode', function (t) {
   pack.finalize()
 
   pack.pipe(concat(function (data) {
-    t.equal(data.length & 511, 0)
-    t.deepEqual(data, fs.readFileSync(fixtures.UNICODE_TAR))
+    t.is(data.length & 511, 0)
+    t.alike(data, fs.readFileSync(fixtures.UNICODE_TAR))
   }))
 })
 
-test('backpressure', function (t) {
-  var slowWritable = new Writable({ highWaterMark: 1 })
-  slowWritable._write = (chunk, enc, next) => {
-    setImmediate(next)
-  }
+test('backpressure', async function (t) {
+  const end = t.test('end')
+  end.plan(1)
 
-  var pack = tar.pack()
-  var later = false
+  const slowStream = new Writable({
+    highWaterMark: 1,
 
-  setImmediate(() => {
-    later = true
+    write (data, cb) {
+      setImmediate(cb)
+    }
   })
 
-  pack.pipe(slowWritable)
+  slowStream.on('finish', () => end.pass())
 
-  slowWritable.on('finish', () => t.end())
-  pack.on('end', () => t.ok(later))
+  const pack = tar.pack()
 
-  var i = 0
-  var next = () => {
+  let later = false
+
+  setImmediate(() => { later = true })
+
+  pack
+    .on('end', () => t.ok(later))
+    .pipe(slowStream)
+
+  let i = 0
+  const next = () => {
     if (++i < 25) {
-      var header = {
+      const header = {
         name: `file${i}.txt`,
         mtime: new Date(1387580181000),
         mode: parseInt('644', 8),
@@ -223,7 +232,7 @@ test('backpressure', function (t) {
         gid: 20
       }
 
-      var buffer = Buffer.alloc(1024)
+      const buffer = Buffer.alloc(1024)
 
       pack.entry(header, buffer, next)
     } else {
@@ -232,4 +241,6 @@ test('backpressure', function (t) {
   }
 
   next()
+
+  await end
 })
