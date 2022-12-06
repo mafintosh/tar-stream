@@ -86,7 +86,7 @@ test('chunked-one-file', function (t) {
   const b = fs.readFileSync(fixtures.ONE_FILE_TAR)
 
   for (let i = 0; i < b.length; i += 321) {
-    extract.write(b.slice(i, clamp(i + 321, b.length, b.length)))
+    extract.write(b.subarray(i, clamp(i + 321, b.length, b.length)))
   }
   extract.end()
 })
@@ -212,7 +212,7 @@ test('chunked-multi-file', function (t) {
 
   const b = fs.readFileSync(fixtures.MULTI_FILE_TAR)
   for (let i = 0; i < b.length; i += 321) {
-    extract.write(b.slice(i, clamp(i + 321, b.length, b.length)))
+    extract.write(b.subarray(i, clamp(i + 321, b.length, b.length)))
   }
   extract.end()
 })

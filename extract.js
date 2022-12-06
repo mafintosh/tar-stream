@@ -204,11 +204,11 @@ class Extract extends Writable {
     const s = this._stream
     const b = this._buffer
     const missing = this._missing
-    if (data.length) this._partial = true
+    if (data.byteLength) this._partial = true
 
     // we do not reach end-of-chunk now. just forward it
-    if (data.length < missing) {
-      this._missing -= data.length
+    if (data.byteLength < missing) {
+      this._missing -= data.byteLength
       this._overflow = null
       if (s) {
         if (s.write(data, cb)) cb()
@@ -224,9 +224,9 @@ class Extract extends Writable {
     this._missing = 0
 
     let overflow = null
-    if (data.length > missing) {
-      overflow = data.slice(missing)
-      data = data.slice(0, missing)
+    if (data.byteLength > missing) {
+      overflow = data.subarray(missing)
+      data = data.subarray(0, missing)
     }
 
     if (s) s.end(data)

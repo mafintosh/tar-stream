@@ -1,8 +1,7 @@
 const { constants } = require('fs')
 const { Readable, Writable } = require('streamx')
+const { StringDecoder } = require('string_decoder')
 const b4a = require('b4a')
-
-const StringDecoder = require('string_decoder').StringDecoder
 
 const headers = require('./headers')
 
@@ -15,7 +14,7 @@ const noop = function () {}
 
 const overflow = function (self, size) {
   size &= 511
-  if (size) self.push(END_OF_TAR.slice(0, 512 - size))
+  if (size) self.push(END_OF_TAR.subarray(0, 512 - size))
 }
 
 function modeToType (mode) {
@@ -38,7 +37,7 @@ class Sink extends Writable {
   }
 
   _write (data, cb) {
-    this.written += data.length
+    this.written += data.byteLength
     if (this._to.push(data)) return cb()
     this._to._drain = cb
   }
@@ -184,7 +183,7 @@ class Pack extends Readable {
       mode: header.mode,
       uid: header.uid,
       gid: header.gid,
-      size: paxHeader.length,
+      size: paxHeader.byteLength,
       mtime: header.mtime,
       type: 'pax-header',
       linkname: header.linkname && 'PaxHeader',
@@ -196,7 +195,7 @@ class Pack extends Readable {
 
     this.push(headers.encode(newHeader))
     this.push(paxHeader)
-    overflow(this, paxHeader.length)
+    overflow(this, paxHeader.byteLength)
 
     newHeader.size = header.size
     newHeader.type = header.type

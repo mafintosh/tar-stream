@@ -213,27 +213,27 @@ exports.encode = function (opts) {
   if (b4a.byteLength(name) > 100 || b4a.byteLength(prefix) > 155) return null
   if (opts.linkname && b4a.byteLength(opts.linkname) > 100) return null
 
-  buf.write(name)
-  buf.write(encodeOct(opts.mode & MASK, 6), 100)
-  buf.write(encodeOct(opts.uid, 6), 108)
-  buf.write(encodeOct(opts.gid, 6), 116)
-  buf.write(encodeOct(opts.size, 11), 124)
-  buf.write(encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136)
+  b4a.write(buf, name)
+  b4a.write(buf, encodeOct(opts.mode & MASK, 6), 100)
+  b4a.write(buf, encodeOct(opts.uid, 6), 108)
+  b4a.write(buf, encodeOct(opts.gid, 6), 116)
+  b4a.write(buf, encodeOct(opts.size, 11), 124)
+  b4a.write(buf, encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136)
 
   buf[156] = ZERO_OFFSET + toTypeflag(opts.type)
 
-  if (opts.linkname) buf.write(opts.linkname, 157)
+  if (opts.linkname) b4a.write(buf, opts.linkname, 157)
 
-  USTAR_MAGIC.copy(buf, MAGIC_OFFSET)
-  USTAR_VER.copy(buf, VERSION_OFFSET)
-  if (opts.uname) buf.write(opts.uname, 265)
-  if (opts.gname) buf.write(opts.gname, 297)
-  buf.write(encodeOct(opts.devmajor || 0, 6), 329)
-  buf.write(encodeOct(opts.devminor || 0, 6), 337)
+  b4a.copy(USTAR_MAGIC, buf, MAGIC_OFFSET)
+  b4a.copy(USTAR_VER, buf, VERSION_OFFSET)
+  if (opts.uname) b4a.write(buf, opts.uname, 265)
+  if (opts.gname) b4a.write(buf, opts.gname, 297)
+  b4a.write(buf, encodeOct(opts.devmajor || 0, 6), 329)
+  b4a.write(buf, encodeOct(opts.devminor || 0, 6), 337)
 
-  if (prefix) buf.write(prefix, 345)
+  if (prefix) b4a.write(buf, prefix, 345)
 
-  buf.write(encodeOct(cksum(buf), 6), 148)
+  b4a.write(buf, encodeOct(cksum(buf), 6), 148)
 
   return buf
 }
