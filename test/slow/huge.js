@@ -1,27 +1,28 @@
-var test = require('tape')
-var stream = require('readable-stream')
-var zlib = require('zlib')
-var fs = require('fs')
-var tar = require('../')
-var fixtures = require('./fixtures')
+const test = require('brittle')
+const zlib = require('zlib')
+const fs = require('fs')
+const { Writable } = require('streamx')
+const tar = require('../..')
+const fixtures = require('../fixtures')
 
 test('huge', function (t) {
   t.plan(1)
 
-  var extract = tar.extract()
-  var noEntries = false
-  var hugeFileSize = 8804630528 // ~8.2GB
-  var dataLength = 0
+  const extract = tar.extract()
+  let noEntries = false
+  const hugeFileSize = 8804630528 // ~8.2GB
+  let dataLength = 0
 
-  var countStream = new stream.Writable()
-  countStream._write = function (chunk, encoding, done) {
-    dataLength += chunk.length
-    done()
-  }
+  const countStream = new Writable({
+    write (data, cb) {
+      dataLength += data.length
+      cb()
+    }
+  })
 
   // Make sure we read the correct pax size entry for a file larger than 8GB.
   extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+    t.alike(header, {
       devmajor: 0,
       devminor: 0,
       gid: 20,
@@ -51,10 +52,10 @@ test('huge', function (t) {
 
   extract.on('finish', function () {
     t.ok(noEntries)
-    t.equal(dataLength, hugeFileSize)
+    t.is(dataLength, hugeFileSize)
   })
 
-  var gunzip = zlib.createGunzip()
-  var reader = fs.createReadStream(fixtures.HUGE)
+  const gunzip = zlib.createGunzip()
+  const reader = fs.createReadStream(fixtures.HUGE)
   reader.pipe(gunzip).pipe(extract)
 })

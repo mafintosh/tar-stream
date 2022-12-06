@@ -1,10 +1,10 @@
-var test = require('tape')
-var tar = require('../index')
-var fixtures = require('./fixtures')
-var concat = require('concat-stream')
-var fs = require('fs')
+const test = require('brittle')
+const concat = require('concat-stream')
+const fs = require('fs')
+const tar = require('..')
+const fixtures = require('./fixtures')
 
-var clamp = function (index, len, defaultValue) {
+const clamp = function (index, len, defaultValue) {
   if (typeof index !== 'number') return defaultValue
   index = ~~index // Coerce to integer.
   if (index >= len) return len
@@ -17,13 +17,13 @@ var clamp = function (index, len, defaultValue) {
 test('one-file', function (t) {
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -38,8 +38,8 @@ test('one-file', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'hello world\n')
-      callback()
+      t.is(data.toString(), 'hello world\n')
+      cb()
     }))
   })
 
@@ -53,13 +53,13 @@ test('one-file', function (t) {
 test('chunked-one-file', function (t) {
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -74,8 +74,8 @@ test('chunked-one-file', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'hello world\n')
-      callback()
+      t.is(data.toString(), 'hello world\n')
+      cb()
     }))
   })
 
@@ -83,10 +83,10 @@ test('chunked-one-file', function (t) {
     t.ok(noEntries)
   })
 
-  var b = fs.readFileSync(fixtures.ONE_FILE_TAR)
+  const b = fs.readFileSync(fixtures.ONE_FILE_TAR)
 
-  for (var i = 0; i < b.length; i += 321) {
-    extract.write(b.slice(i, clamp(i + 321, b.length, b.length)))
+  for (let i = 0; i < b.length; i += 321) {
+    extract.write(b.subarray(i, clamp(i + 321, b.length, b.length)))
   }
   extract.end()
 })
@@ -94,13 +94,13 @@ test('chunked-one-file', function (t) {
 test('multi-file', function (t) {
   t.plan(5)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  var onfile1 = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const onfile1 = function (header, stream, cb) {
+    t.alike(header, {
       name: 'file-1.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -115,15 +115,15 @@ test('multi-file', function (t) {
 
     extract.on('entry', onfile2)
     stream.pipe(concat(function (data) {
-      t.same(data.toString(), 'i am file-1\n')
-      callback()
+      t.is(data.toString(), 'i am file-1\n')
+      cb()
     }))
   }
 
-  var onfile2 = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const onfile2 = function (header, stream, cb) {
+    t.alike(header, {
       name: 'file-2.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -138,8 +138,8 @@ test('multi-file', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'i am file-2\n')
-      callback()
+      t.is(data.toString(), 'i am file-2\n')
+      cb()
     }))
   }
 
@@ -155,13 +155,13 @@ test('multi-file', function (t) {
 test('chunked-multi-file', function (t) {
   t.plan(5)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  var onfile1 = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const onfile1 = function (header, stream, cb) {
+    t.alike(header, {
       name: 'file-1.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -176,15 +176,15 @@ test('chunked-multi-file', function (t) {
 
     extract.on('entry', onfile2)
     stream.pipe(concat(function (data) {
-      t.same(data.toString(), 'i am file-1\n')
-      callback()
+      t.is(data.toString(), 'i am file-1\n')
+      cb()
     }))
   }
 
-  var onfile2 = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const onfile2 = function (header, stream, cb) {
+    t.alike(header, {
       name: 'file-2.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -199,8 +199,8 @@ test('chunked-multi-file', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'i am file-2\n')
-      callback()
+      t.is(data.toString(), 'i am file-2\n')
+      cb()
     }))
   }
 
@@ -210,9 +210,9 @@ test('chunked-multi-file', function (t) {
     t.ok(noEntries)
   })
 
-  var b = fs.readFileSync(fixtures.MULTI_FILE_TAR)
-  for (var i = 0; i < b.length; i += 321) {
-    extract.write(b.slice(i, clamp(i + 321, b.length, b.length)))
+  const b = fs.readFileSync(fixtures.MULTI_FILE_TAR)
+  for (let i = 0; i < b.length; i += 321) {
+    extract.write(b.subarray(i, clamp(i + 321, b.length, b.length)))
   }
   extract.end()
 })
@@ -220,13 +220,13 @@ test('chunked-multi-file', function (t) {
 test('pax', function (t) {
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'pax.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -242,8 +242,8 @@ test('pax', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'hello world\n')
-      callback()
+      t.is(data.toString(), 'hello world\n')
+      cb()
     }))
   })
 
@@ -257,13 +257,13 @@ test('pax', function (t) {
 test('types', function (t) {
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  var ondir = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const ondir = function (header, stream, cb) {
+    t.alike(header, {
       name: 'directory',
-      mode: parseInt('755', 8),
+      mode: 0o755,
       uid: 501,
       gid: 20,
       size: 0,
@@ -279,13 +279,13 @@ test('types', function (t) {
       t.ok(false)
     })
     extract.once('entry', onlink)
-    callback()
+    cb()
   }
 
-  var onlink = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const onlink = function (header, stream, cb) {
+    t.alike(header, {
       name: 'directory-link',
-      mode: parseInt('755', 8),
+      mode: 0o755,
       uid: 501,
       gid: 20,
       size: 0,
@@ -301,7 +301,7 @@ test('types', function (t) {
       t.ok(false)
     })
     noEntries = true
-    callback()
+    cb()
   }
 
   extract.once('entry', ondir)
@@ -316,13 +316,13 @@ test('types', function (t) {
 test('long-name', function (t) {
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'my/file/is/longer/than/100/characters/and/should/use/the/prefix/header/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/filename.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 16,
@@ -337,8 +337,8 @@ test('long-name', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'hello long name\n')
-      callback()
+      t.is(data.toString(), 'hello long name\n')
+      cb()
     }))
   })
 
@@ -352,13 +352,13 @@ test('long-name', function (t) {
 test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'høllø.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 4,
@@ -374,8 +374,8 @@ test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'hej\n')
-      callback()
+      t.is(data.toString(), 'hej\n')
+      cb()
     }))
   })
 
@@ -389,13 +389,13 @@ test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
 test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'høstål.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 8,
@@ -411,8 +411,8 @@ test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'høllø\n')
-      callback()
+      t.is(data.toString(), 'høllø\n')
+      cb()
     }))
   })
 
@@ -426,19 +426,19 @@ test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
 test('name-is-100', function (t) {
   t.plan(3)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
-  extract.on('entry', function (header, stream, callback) {
-    t.same(header.name.length, 100)
+  extract.on('entry', function (header, stream, cb) {
+    t.is(header.name.length, 100)
 
     stream.pipe(concat(function (data) {
-      t.same(data.toString(), 'hello\n')
-      callback()
+      t.is(data.toString(), 'hello\n')
+      cb()
     }))
   })
 
   extract.on('finish', function () {
-    t.ok(true)
+    t.pass()
   })
 
   extract.end(fs.readFileSync(fixtures.NAME_IS_100_TAR))
@@ -447,7 +447,7 @@ test('name-is-100', function (t) {
 test('invalid-file', function (t) {
   t.plan(1)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
   extract.on('error', function (err) {
     t.ok(!!err)
@@ -460,15 +460,15 @@ test('invalid-file', function (t) {
 test('space prefixed', function (t) {
   t.plan(5)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
-  extract.on('entry', function (header, stream, callback) {
-    t.ok(true)
-    callback()
+  extract.on('entry', function (header, stream, cb) {
+    t.pass()
+    cb()
   })
 
   extract.on('finish', function () {
-    t.ok(true)
+    t.pass()
   })
 
   extract.end(fs.readFileSync(fixtures.SPACE_TAR_GZ))
@@ -477,15 +477,15 @@ test('space prefixed', function (t) {
 test('gnu long path', function (t) {
   t.plan(2)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
-  extract.on('entry', function (header, stream, callback) {
+  extract.on('entry', function (header, stream, cb) {
     t.ok(header.name.length > 100)
-    callback()
+    cb()
   })
 
   extract.on('finish', function () {
-    t.ok(true)
+    t.pass()
   })
 
   extract.end(fs.readFileSync(fixtures.GNU_LONG_PATH))
@@ -493,12 +493,12 @@ test('gnu long path', function (t) {
 
 test('base 256 uid and gid', function (t) {
   t.plan(2)
-  var extract = tar.extract()
+  const extract = tar.extract()
 
-  extract.on('entry', function (header, stream, callback) {
+  extract.on('entry', function (header, stream, cb) {
     t.ok(header.uid === 116435139)
     t.ok(header.gid === 1876110778)
-    callback()
+    cb()
   })
 
   extract.end(fs.readFileSync(fixtures.BASE_256_UID_GID))
@@ -507,12 +507,12 @@ test('base 256 uid and gid', function (t) {
 test('base 256 size', function (t) {
   t.plan(2)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -524,11 +524,11 @@ test('base 256 size', function (t) {
       devmajor: 0,
       devminor: 0
     })
-    callback()
+    cb()
   })
 
   extract.on('finish', function () {
-    t.ok(true)
+    t.pass()
   })
 
   extract.end(fs.readFileSync(fixtures.BASE_256_SIZE))
@@ -538,13 +538,13 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
   t.plan(3)
 
   // This is the older name for the "latin1" encoding in Node
-  var extract = tar.extract({ filenameEncoding: 'binary' })
-  var noEntries = false
+  const extract = tar.extract({ filenameEncoding: 'binary' })
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'En français, s\'il vous plaît?.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 0,
       gid: 0,
       size: 14,
@@ -559,8 +559,8 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'Hello, world!\n')
-      callback()
+      t.is(data.toString(), 'Hello, world!\n')
+      cb()
     }))
   })
 
@@ -574,14 +574,14 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
 test('incomplete', function (t) {
   t.plan(1)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
-  extract.on('entry', function (header, stream, callback) {
-    callback()
+  extract.on('entry', function (header, stream, cb) {
+    cb()
   })
 
   extract.on('error', function (err) {
-    t.same(err.message, 'Unexpected end of data')
+    t.is(err.message, 'Unexpected end of data')
   })
 
   extract.on('finish', function () {
@@ -594,13 +594,13 @@ test('incomplete', function (t) {
 test('gnu', function (t) { // can correctly unpack gnu-tar format
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 12345,
       gid: 67890,
       size: 14,
@@ -615,8 +615,8 @@ test('gnu', function (t) { // can correctly unpack gnu-tar format
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'Hello, world!\n')
-      callback()
+      t.is(data.toString(), 'Hello, world!\n')
+      cb()
     }))
   })
 
@@ -634,13 +634,13 @@ test('gnu-incremental', function (t) {
   // for a directory prefix (also offset 345).
   t.plan(3)
 
-  var extract = tar.extract()
-  var noEntries = false
+  const extract = tar.extract()
+  let noEntries = false
 
-  extract.on('entry', function (header, stream, callback) {
-    t.deepEqual(header, {
+  extract.on('entry', function (header, stream, cb) {
+    t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 12345,
       gid: 67890,
       size: 14,
@@ -655,8 +655,8 @@ test('gnu-incremental', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'Hello, world!\n')
-      callback()
+      t.is(data.toString(), 'Hello, world!\n')
+      cb()
     }))
   })
 
@@ -670,7 +670,7 @@ test('gnu-incremental', function (t) {
 test('v7 unsupported', function (t) { // correctly fails to parse v7 tarballs
   t.plan(1)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
   extract.on('error', function (err) {
     t.ok(!!err)
@@ -683,7 +683,7 @@ test('v7 unsupported', function (t) { // correctly fails to parse v7 tarballs
 test('unknown format doesn\'t extract by default', function (t) {
   t.plan(1)
 
-  var extract = tar.extract()
+  const extract = tar.extract()
 
   extract.on('error', function (err) {
     t.ok(!!err)
@@ -696,13 +696,13 @@ test('unknown format doesn\'t extract by default', function (t) {
 test('unknown format attempts to extract if allowed', function (t) {
   t.plan(5)
 
-  var extract = tar.extract({ allowUnknownFormat: true })
-  var noEntries = false
+  const extract = tar.extract({ allowUnknownFormat: true })
+  let noEntries = false
 
-  var onfile1 = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const onfile1 = function (header, stream, cb) {
+    t.alike(header, {
       name: 'file-1.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -717,15 +717,15 @@ test('unknown format attempts to extract if allowed', function (t) {
 
     extract.on('entry', onfile2)
     stream.pipe(concat(function (data) {
-      t.same(data.toString(), 'i am file-1\n')
-      callback()
+      t.is(data.toString(), 'i am file-1\n')
+      cb()
     }))
   }
 
-  var onfile2 = function (header, stream, callback) {
-    t.deepEqual(header, {
+  const onfile2 = function (header, stream, cb) {
+    t.alike(header, {
       name: 'file-2.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -740,8 +740,8 @@ test('unknown format attempts to extract if allowed', function (t) {
 
     stream.pipe(concat(function (data) {
       noEntries = true
-      t.same(data.toString(), 'i am file-2\n')
-      callback()
+      t.is(data.toString(), 'i am file-2\n')
+      cb()
     }))
   }
 
