@@ -1,6 +1,7 @@
 const test = require('brittle')
 const concat = require('concat-stream')
 const fs = require('fs')
+const b4a = require('b4a')
 const { Writable } = require('streamx')
 const tar = require('..')
 const fixtures = require('./fixtures')
@@ -13,7 +14,7 @@ test('one-file', function (t) {
   pack.entry({
     name: 'test.txt',
     mtime: new Date(1387580181000),
-    mode: parseInt('644', 8),
+    mode: 0o644,
     uname: 'maf',
     gname: 'staff',
     uid: 501,
@@ -36,7 +37,7 @@ test('multi-file', function (t) {
   pack.entry({
     name: 'file-1.txt',
     mtime: new Date(1387580181000),
-    mode: parseInt('644', 8),
+    mode: 0o644,
     uname: 'maf',
     gname: 'staff',
     uid: 501,
@@ -46,7 +47,7 @@ test('multi-file', function (t) {
   pack.entry({
     name: 'file-2.txt',
     mtime: new Date(1387580181000),
-    mode: parseInt('644', 8),
+    mode: 0o644,
     size: 12,
     uname: 'maf',
     gname: 'staff',
@@ -70,7 +71,7 @@ test('pax', function (t) {
   pack.entry({
     name: 'pax.txt',
     mtime: new Date(1387580181000),
-    mode: parseInt('644', 8),
+    mode: 0o644,
     uname: 'maf',
     gname: 'staff',
     uid: 501,
@@ -95,7 +96,7 @@ test('types', function (t) {
     name: 'directory',
     mtime: new Date(1387580181000),
     type: 'directory',
-    mode: parseInt('755', 8),
+    mode: 0o755,
     uname: 'maf',
     gname: 'staff',
     uid: 501,
@@ -107,7 +108,7 @@ test('types', function (t) {
     mtime: new Date(1387580181000),
     type: 'symlink',
     linkname: 'directory',
-    mode: parseInt('755', 8),
+    mode: 0o755,
     uname: 'maf',
     gname: 'staff',
     uid: 501,
@@ -132,7 +133,7 @@ test('long-name', function (t) {
     name: 'my/file/is/longer/than/100/characters/and/should/use/the/prefix/header/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/filename.txt',
     mtime: new Date(1387580181000),
     type: 'file',
-    mode: parseInt('644', 8),
+    mode: 0o644,
     uname: 'maf',
     gname: 'staff',
     uid: 501,
@@ -155,7 +156,7 @@ test('large-uid-gid', function (t) {
   pack.entry({
     name: 'test.txt',
     mtime: new Date(1387580181000),
-    mode: parseInt('644', 8),
+    mode: 0o644,
     uname: 'maf',
     gname: 'staff',
     uid: 1000000001,
@@ -180,7 +181,7 @@ test('unicode', function (t) {
     name: 'høstål.txt',
     mtime: new Date(1387580181000),
     type: 'file',
-    mode: parseInt('644', 8),
+    mode: 0o644,
     uname: 'maf',
     gname: 'staff',
     uid: 501,
@@ -225,14 +226,14 @@ test('backpressure', async function (t) {
       const header = {
         name: `file${i}.txt`,
         mtime: new Date(1387580181000),
-        mode: parseInt('644', 8),
+        mode: 0o644,
         uname: 'maf',
         gname: 'staff',
         uid: 501,
         gid: 20
       }
 
-      const buffer = Buffer.alloc(1024)
+      const buffer = b4a.alloc(1024)
 
       pack.entry(header, buffer, next)
     } else {

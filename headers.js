@@ -3,11 +3,11 @@ const b4a = require('b4a')
 const ZEROS = '0000000000000000000'
 const SEVENS = '7777777777777777777'
 const ZERO_OFFSET = '0'.charCodeAt(0)
-const USTAR_MAGIC = Buffer.from('ustar\x00', 'binary')
-const USTAR_VER = Buffer.from('00', 'binary')
-const GNU_MAGIC = Buffer.from('ustar\x20', 'binary')
-const GNU_VER = Buffer.from('\x20\x00', 'binary')
-const MASK = parseInt('7777', 8)
+const USTAR_MAGIC = b4a.from('ustar\x00', 'binary')
+const USTAR_VER = b4a.from('00', 'binary')
+const GNU_MAGIC = b4a.from('ustar\x20', 'binary')
+const GNU_VER = b4a.from('\x20\x00', 'binary')
+const MASK = 0o7777
 const MAGIC_OFFSET = 257
 const VERSION_OFFSET = 263
 
@@ -151,7 +151,7 @@ const decodeStr = function (val, offset, length, encoding) {
 }
 
 const addLength = function (str) {
-  const len = Buffer.byteLength(str)
+  const len = b4a.byteLength(str)
   let digits = Math.floor(Math.log(len) / Math.log(10)) + 1
   if (len + digits >= Math.pow(10, digits)) digits++
 
@@ -172,7 +172,7 @@ exports.encodePax = function (opts) { // TODO: encode more stuff in pax
       result += addLength(' ' + key + '=' + pax[key] + '\n')
     }
   }
-  return Buffer.from(result)
+  return b4a.from(result)
 }
 
 exports.decodePax = function (buf) {
@@ -201,17 +201,17 @@ exports.encode = function (opts) {
   let prefix = ''
 
   if (opts.typeflag === 5 && name[name.length - 1] !== '/') name += '/'
-  if (Buffer.byteLength(name) !== name.length) return null // utf-8
+  if (b4a.byteLength(name) !== name.length) return null // utf-8
 
-  while (Buffer.byteLength(name) > 100) {
+  while (b4a.byteLength(name) > 100) {
     const i = name.indexOf('/')
     if (i === -1) return null
     prefix += prefix ? '/' + name.slice(0, i) : name.slice(0, i)
     name = name.slice(i + 1)
   }
 
-  if (Buffer.byteLength(name) > 100 || Buffer.byteLength(prefix) > 155) return null
-  if (opts.linkname && Buffer.byteLength(opts.linkname) > 100) return null
+  if (b4a.byteLength(name) > 100 || b4a.byteLength(prefix) > 155) return null
+  if (opts.linkname && b4a.byteLength(opts.linkname) > 100) return null
 
   buf.write(name)
   buf.write(encodeOct(opts.mode & MASK, 6), 100)

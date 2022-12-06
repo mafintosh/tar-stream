@@ -23,7 +23,7 @@ test('one-file', function (t) {
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -59,7 +59,7 @@ test('chunked-one-file', function (t) {
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -100,7 +100,7 @@ test('multi-file', function (t) {
   const onfile1 = function (header, stream, cb) {
     t.alike(header, {
       name: 'file-1.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -123,7 +123,7 @@ test('multi-file', function (t) {
   const onfile2 = function (header, stream, cb) {
     t.alike(header, {
       name: 'file-2.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -161,7 +161,7 @@ test('chunked-multi-file', function (t) {
   const onfile1 = function (header, stream, cb) {
     t.alike(header, {
       name: 'file-1.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -184,7 +184,7 @@ test('chunked-multi-file', function (t) {
   const onfile2 = function (header, stream, cb) {
     t.alike(header, {
       name: 'file-2.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -226,7 +226,7 @@ test('pax', function (t) {
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'pax.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -263,7 +263,7 @@ test('types', function (t) {
   const ondir = function (header, stream, cb) {
     t.alike(header, {
       name: 'directory',
-      mode: parseInt('755', 8),
+      mode: 0o755,
       uid: 501,
       gid: 20,
       size: 0,
@@ -285,7 +285,7 @@ test('types', function (t) {
   const onlink = function (header, stream, cb) {
     t.alike(header, {
       name: 'directory-link',
-      mode: parseInt('755', 8),
+      mode: 0o755,
       uid: 501,
       gid: 20,
       size: 0,
@@ -322,7 +322,7 @@ test('long-name', function (t) {
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'my/file/is/longer/than/100/characters/and/should/use/the/prefix/header/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/foobarbaz/filename.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 16,
@@ -358,7 +358,7 @@ test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'høllø.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 4,
@@ -395,7 +395,7 @@ test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'høstål.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 8,
@@ -512,7 +512,7 @@ test('base 256 size', function (t) {
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -544,7 +544,7 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'En français, s\'il vous plaît?.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 0,
       gid: 0,
       size: 14,
@@ -600,7 +600,7 @@ test('gnu', function (t) { // can correctly unpack gnu-tar format
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 12345,
       gid: 67890,
       size: 14,
@@ -640,7 +640,7 @@ test('gnu-incremental', function (t) {
   extract.on('entry', function (header, stream, cb) {
     t.alike(header, {
       name: 'test.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 12345,
       gid: 67890,
       size: 14,
@@ -702,7 +702,7 @@ test('unknown format attempts to extract if allowed', function (t) {
   const onfile1 = function (header, stream, cb) {
     t.alike(header, {
       name: 'file-1.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,
@@ -725,7 +725,7 @@ test('unknown format attempts to extract if allowed', function (t) {
   const onfile2 = function (header, stream, cb) {
     t.alike(header, {
       name: 'file-2.txt',
-      mode: parseInt('644', 8),
+      mode: 0o644,
       uid: 501,
       gid: 20,
       size: 12,

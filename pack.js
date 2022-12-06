@@ -73,7 +73,7 @@ class Pack extends Readable {
   }
 
   entry (header, buffer, callback) {
-    if (this._stream) { throw new Error('already piping an entry') }
+    if (this._stream) throw new Error('already piping an entry')
     if (this._finalized || this.destroyed) return
 
     if (typeof buffer === 'function') {
@@ -85,20 +85,21 @@ class Pack extends Readable {
 
     const self = this
 
-    if (!header.size || header.type === 'symlink') { header.size = 0 }
-    if (!header.type) { header.type = modeToType(header.mode) }
-    if (!header.mode) { header.mode = header.type === 'directory' ? DMODE : FMODE }
-    if (!header.uid) { header.uid = 0 }
-    if (!header.gid) { header.gid = 0 }
-    if (!header.mtime) { header.mtime = new Date() }
+    if (!header.size || header.type === 'symlink') header.size = 0
+    if (!header.type) header.type = modeToType(header.mode)
+    if (!header.mode) header.mode = header.type === 'directory' ? DMODE : FMODE
+    if (!header.uid) header.uid = 0
+    if (!header.gid) header.gid = 0
+    if (!header.mtime) header.mtime = new Date()
 
-    if (typeof buffer === 'string') { buffer = Buffer.from(buffer) }
-    if (Buffer.isBuffer(buffer)) {
-      header.size = buffer.length
+    if (typeof buffer === 'string') buffer = b4a.from(buffer)
+    if (b4a.isBuffer(buffer)) {
+      header.size = buffer.byteLength
       this._encode(header)
       const ok = this.push(buffer)
       overflow(self, header.size)
-      if (ok) { process.nextTick(callback) } else { this._drain = callback }
+      if (ok) process.nextTick(callback)
+      else this._drain = callback
       return new Void()
     }
 
