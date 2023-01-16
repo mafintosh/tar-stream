@@ -262,12 +262,17 @@ exports.decode = function (buf, filenameEncoding, allowUnknownFormat) {
   // valid checksum
   if (c !== decodeOct(buf, 148, 8)) throw new Error('Invalid tar header. Maybe the tar is corrupted or it needs to be gunzipped?')
 
-  if (USTAR_MAGIC.compare(buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0) {
+    var magicBuf = new b4a.alloc(6,0,'hex')
+  var versionBuf = new b4a.alloc(2,0,'hex')
+  b4a.copy(buf,magicBuf,0,MAGIC_OFFSET, MAGIC_OFFSET + 6)
+  b4a.copy(buf,versionBuf,0,VERSION_OFFSET, VERSION_OFFSET + 2)
+  
+  if (b4a.compare(USTAR_MAGIC, magicBuf) === 0) {
     // ustar (posix) format.
     // prepend prefix, if present.
     if (buf[345]) name = decodeStr(buf, 345, 155, filenameEncoding) + '/' + name
-  } else if (GNU_MAGIC.compare(buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0 &&
-             GNU_VER.compare(buf, VERSION_OFFSET, VERSION_OFFSET + 2) === 0) {
+  } else if (b4a.compare(GNU_MAGIC, magicBuf) === 0 && b4a.compare(GNU_VER,versionBuf) === 0) {
+    // 'gnu'/'oldgnu' format. Similar to ustar, but has support for incremental and 
     // 'gnu'/'oldgnu' format. Similar to ustar, but has support for incremental and
     // multi-volume tarballs.
   } else {
