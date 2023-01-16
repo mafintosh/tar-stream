@@ -1,18 +1,4 @@
-try{
-  const { constants } = require('fs')
-} catch(_){
-  //https://github.com/torvalds/linux/blob/master/include/uapi/linux/stat.h
-  const constants = {
-    S_IFMT:  0o0170000, //61440
-    S_IFLNK: 0o0120000, //40960,
-    S_IFBLK: 0o0060000, //24576,
-    S_IFDIR: 0o0040000, //16384,
-    S_IFCHR: 0o0020000, //8192,
-    S_IFIFO: 0o0010000, //4096,
-  }
-}
-
-
+const constants = require('constants')
 const { Readable, Writable } = require('streamx')
 const { StringDecoder } = require('string_decoder')
 const b4a = require('b4a')
