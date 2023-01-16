@@ -28,5 +28,8 @@
     "brittle": "^3.1.1",
     "concat-stream": "^2.0.0",
     "standard": "^17.0.0"
+  },
+  "browser":{
+    "constants.js": "constants.browser.js"
   }
 }
