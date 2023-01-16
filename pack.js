@@ -1,4 +1,4 @@
-const constants = require('constants')
+const constants = require('./constants')
 const { Readable, Writable } = require('streamx')
 const { StringDecoder } = require('string_decoder')
 const b4a = require('b4a')
