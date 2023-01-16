@@ -30,6 +30,7 @@
     "standard": "^17.0.0"
   },
   "browser":{
-    "constants.js": "constants.browser.js"
+    "fs": false,
+    "./constants": "constants.browser.js"
   }
 }
