@@ -1,4 +1,6 @@
-let constants = require('fs')
+let { constants } = require('fs')
+
+console.log('constants2', constants)
 
 if (!constants) {
   constants = {
@@ -61,4 +63,4 @@ if (!constants) {
   }
 }
 
-module.exports = [constants]
+module.exports = { constants }

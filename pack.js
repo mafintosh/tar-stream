@@ -2,7 +2,7 @@ const { constants } = require('./constants')
 const { Readable, Writable } = require('streamx')
 const { StringDecoder } = require('string_decoder')
 const b4a = require('b4a')
-
+console.log('constants', constants)
 const headers = require('./headers')
 
 const DMODE = 0o755
