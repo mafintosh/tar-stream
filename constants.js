@@ -1,4 +1,4 @@
-var constants = require('fs')
+let constants = require('fs')
 
 if (!constants){
   constants = {
