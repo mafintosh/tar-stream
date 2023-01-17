@@ -1,6 +1,6 @@
 let constants = require('fs')
 
-if (!constants){
+if (!constants) {
   constants = {
     UV_FS_SYMLINK_DIR: 1,
     UV_FS_SYMLINK_JUNCTION: 2,
