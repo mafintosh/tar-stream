@@ -1,7 +1,7 @@
 {
-  "name": "tar-stream",
+  "name": "tar-stream-web",
   "version": "3.0.0",
-  "description": "tar-stream is a streaming tar parser and generator and nothing else. It operates purely using streams which means you can easily extract/parse tarballs without ever hitting the file system.",
+  "description": "tar-stream-web is patched version of tar-stream that runs in a web browser. The original project https://github.com/mafintosh/tar-stream provides a streaming tar parser and generator and nothing else. It operates purely using streams which means you can easily extract/parse tarballs without ever hitting the file system.",
   "main": "index.js",
   "files": [
     "*.js"
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mafintosh/tar-stream.git"
+    "url": "git+https://github.com/cesare-montresor/tar-stream-web.git"
   },
-  "author": "Mathias Buus <mathiasbuus@gmail.com>",
+  "author": "Cesare Montresor <cesare.montresor@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mafintosh/tar-stream/issues"
+    "url": "https://github.com/cesare-montresor/tar-stream-web/issues"
   },
-  "homepage": "https://github.com/mafintosh/tar-stream",
+  "homepage": "https://github.com/cesare-montresor/tar-stream-web",
   "dependencies": {
     "b4a": "^1.6.1",
     "bl": "^6.0.0",
