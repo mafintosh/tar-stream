@@ -6,7 +6,7 @@ const tar = require('../..')
 const fixtures = require('../fixtures')
 
 test('huge', function (t) {
-  t.plan(1)
+  t.plan(3)
 
   const extract = tar.extract()
   let noEntries = false
@@ -48,6 +48,7 @@ test('huge', function (t) {
 
     noEntries = true
     stream.pipe(countStream)
+    callback()
   })
 
   extract.on('finish', function () {

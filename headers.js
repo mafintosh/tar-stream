@@ -70,7 +70,7 @@ exports.encode = function encode (opts) {
   b4a.write(buf, encodeOct(opts.mode & MASK, 6), 100)
   b4a.write(buf, encodeOct(opts.uid, 6), 108)
   b4a.write(buf, encodeOct(opts.gid, 6), 116)
-  b4a.write(buf, encodeOct(opts.size, 11), 124)
+  encodeSize(opts.size, buf, 124)
   b4a.write(buf, encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136)
 
   buf[156] = ZERO_OFFSET + toTypeflag(opts.type)
@@ -242,6 +242,22 @@ function encodeOct (val, n) {
   val = val.toString(8)
   if (val.length > n) return SEVENS.slice(0, n) + ' '
   return ZEROS.slice(0, n - val.length) + val + ' '
+}
+
+function encodeSizeBin (num, buf, off) {
+  buf[off] = 0x80
+  for (let i = 11; i > 0; i--) {
+    buf[off + i] = num & 0xff
+    num = Math.floor(num / 0x100)
+  }
+}
+
+function encodeSize (num, buf, off) {
+  if (num.toString(8).length > 11) {
+    encodeSizeBin(num, buf, off)
+  } else {
+    b4a.write(buf, encodeOct(num, 11), off)
+  }
 }
 
 /* Copied from the node-tar repo and modified to meet
