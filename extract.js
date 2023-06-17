@@ -72,6 +72,9 @@ class Source extends Readable {
   }
 
   _read (cb) {
+    if (this.header.size === 0) {
+      this.push(null)
+    }
     if (this._parent._stream === this) {
       this._parent._update()
     }
@@ -160,9 +163,7 @@ class Extract extends Writable {
     this._applyLongHeaders()
 
     if (this._header.size === 0 || this._header.type === 'directory') {
-      const stream = this._createStream()
-      stream.push(null)
-      this.emit('entry', this._header, stream, this._unlockBound)
+      this.emit('entry', this._header, this._createStream(), this._unlockBound)
       return true
     }
 
