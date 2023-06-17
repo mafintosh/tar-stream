@@ -1,37 +1,98 @@
-const bl = require('bl')
-const { Writable, PassThrough } = require('streamx')
+const { Writable, Readable, getStreamError } = require('streamx')
+const FIFO = require('fast-fifo')
+const b4a = require('b4a')
 const headers = require('./headers')
 
-const noop = function () {}
+const EMPTY = b4a.alloc(0)
 
-const overflow = function (size) {
-  size &= 511
-  return size && 512 - size
+class BufferList {
+  constructor () {
+    this.buffered = 0
+    this.shifted = 0
+    this.queue = new FIFO()
+
+    this._offset = 0
+  }
+
+  push (buffer) {
+    this.buffered += buffer.byteLength
+    this.queue.push(buffer)
+  }
+
+  shiftFirst (size) {
+    return this._buffered === 0 ? null : this._next(size)
+  }
+
+  shift (size) {
+    if (size > this.buffered) return null
+    if (size === 0) return EMPTY
+
+    let chunk = this._next(size)
+
+    if (size === chunk.byteLength) return chunk // likely case
+
+    const chunks = [chunk]
+
+    while ((size -= chunk.byteLength) > 0) {
+      chunk = this._next(size)
+      chunks.push(chunk)
+    }
+
+    return b4a.concat(chunks)
+  }
+
+  _next (size) {
+    const buf = this.queue.peek()
+    const rem = buf.byteLength - this._offset
+
+    if (size >= rem) {
+      const sub = this._offset ? buf.subarray(this._offset, buf.byteLength) : buf
+      this.queue.shift()
+      this._offset = 0
+      this.buffered -= rem
+      this.shifted += rem
+      return sub
+    }
+
+    this.buffered -= size
+    this.shifted += size
+
+    return buf.subarray(this._offset, (this._offset += size))
+  }
 }
 
-const emptyStream = function (self, offset) {
-  const s = new Source(self, offset)
-  s.end()
-  return s
-}
-
-const mixinPax = function (header, pax) {
-  if (pax.path) header.name = pax.path
-  if (pax.linkpath) header.linkname = pax.linkpath
-  if (pax.size) header.size = parseInt(pax.size, 10)
-  header.pax = pax
-  return header
-}
-
-class Source extends PassThrough {
-  constructor (self, offset) {
+class Source extends Readable {
+  constructor (self, header, offset) {
     super()
-    this._parent = self
+
+    this.header = header
     this.offset = offset
+
+    this._parent = self
+  }
+
+  _read (cb) {
+    if (this._parent._stream === this) {
+      this._parent._update()
+    }
+    cb(null)
   }
 
   _predestroy () {
-    this._parent.destroy()
+    this._parent.destroy(getStreamError(this))
+  }
+
+  _detach () {
+    if (this._parent._stream === this) {
+      this._parent._stream = null
+      this._parent._missing = overflow(this.header.size)
+      this._parent._update()
+    }
+  }
+
+  _destroy (cb) {
+    this._detach()
+    cb(null)
   }
 }
 
@@ -39,208 +100,306 @@ class Extract extends Writable {
   constructor (opts) {
     super(opts)
 
-    opts = opts || {}
+    if (!opts) opts = {}
 
+    this._buffer = new BufferList()
     this._offset = 0
-    this._buffer = bl()
-    this._missing = 0
-    this._partial = false
-    this._onparse = noop
     this._header = null
     this._stream = null
-    this._overflow = null
-    this._cb = null
+    this._missing = 0
+    this._longHeader = false
+    this._callback = noop
     this._locked = false
+    this._finished = false
     this._pax = null
     this._paxGlobal = null
     this._gnuLongPath = null
     this._gnuLongLinkPath = null
-
-    const self = this
-    const b = self._buffer
-
-    const oncontinue = function () {
-      self._continue()
-    }
-
-    const onunlock = function (err) {
-      self._locked = false
-      if (err) return self.destroy(err)
-      if (!self._stream) oncontinue()
-    }
-
-    const onstreamend = function () {
-      self._stream = null
-      const drain = overflow(self._header.size)
-      if (drain) self._parse(drain, ondrain)
-      else self._parse(512, onheader)
-      if (!self._locked) oncontinue()
-    }
-
-    const ondrain = function () {
-      self._buffer.consume(overflow(self._header.size))
-      self._parse(512, onheader)
-      oncontinue()
-    }
-
-    const onpaxglobalheader = function () {
-      const size = self._header.size
-      self._paxGlobal = headers.decodePax(b.slice(0, size))
-      b.consume(size)
-      onstreamend()
-    }
-
-    const onpaxheader = function () {
-      const size = self._header.size
-      self._pax = headers.decodePax(b.slice(0, size))
-      if (self._paxGlobal) self._pax = Object.assign({}, self._paxGlobal, self._pax)
-      b.consume(size)
-      onstreamend()
-    }
-
-    const ongnulongpath = function () {
-      const size = self._header.size
-      this._gnuLongPath = headers.decodeLongPath(b.slice(0, size), opts.filenameEncoding)
-      b.consume(size)
-      onstreamend()
-    }
-
-    const ongnulonglinkpath = function () {
-      const size = self._header.size
-      this._gnuLongLinkPath = headers.decodeLongPath(b.slice(0, size), opts.filenameEncoding)
-      b.consume(size)
-      onstreamend()
-    }
-
-    const onheader = function () {
-      const offset = self._offset
-      let header
-      try {
-        header = self._header = headers.decode(b.slice(0, 512), opts.filenameEncoding, opts.allowUnknownFormat)
-      } catch (err) {
-        self.destroy(err)
-      }
-      b.consume(512)
-
-      if (!header) {
-        self._parse(512, onheader)
-        oncontinue()
-        return
-      }
-
-      if (header.type === 'gnu-long-path') {
-        self._parse(header.size, ongnulongpath)
-        oncontinue()
-        return
-      }
-
-      if (header.type === 'gnu-long-link-path') {
-        self._parse(header.size, ongnulonglinkpath)
-        oncontinue()
-        return
-      }
-
-      if (header.type === 'pax-global-header') {
-        self._parse(header.size, onpaxglobalheader)
-        oncontinue()
-        return
-      }
-
-      if (header.type === 'pax-header') {
-        self._parse(header.size, onpaxheader)
-        oncontinue()
-        return
-      }
-
-      if (self._gnuLongPath) {
-        header.name = self._gnuLongPath
-        self._gnuLongPath = null
-      }
-
-      if (self._gnuLongLinkPath) {
-        header.linkname = self._gnuLongLinkPath
-        self._gnuLongLinkPath = null
-      }
-
-      if (self._pax) {
-        self._header = header = mixinPax(header, self._pax)
-        self._pax = null
-      }
-
-      self._locked = true
-
-      if (!header.size || header.type === 'directory') {
-        self._parse(512, onheader)
-        self.emit('entry', header, emptyStream(self, offset), onunlock)
-        return
-      }
-
-      self._stream = new Source(self, offset)
-
-      self.emit('entry', header, self._stream, onunlock)
-      self._parse(header.size, onstreamend)
-      oncontinue()
-    }
-
-    this._onheader = onheader
-    this._parse(512, onheader)
+    this._filenameEncoding = opts.filenameEncoding || 'utf-8'
+    this._allowUnknownFormat = !!opts.allowUnknownFormat
+    this._unlockBound = this._unlock.bind(this)
   }
 
-  _parse (size, onparse) {
-    this._offset += size
-    this._missing = size
-    if (onparse === this._onheader) this._partial = false
-    this._onparse = onparse
+  _unlock (err) {
+    this._locked = false
+
+    if (err) {
+      this.destroy(err)
+      this._continueWrite(err)
+      return
+    }
+
+    this._update()
   }
 
-  _continue () {
-    const cb = this._cb
-    this._cb = noop
-    if (this._overflow) this._write(this._overflow, cb)
-    else cb()
+  _consumeHeader () {
+    if (this._locked) return false
+
+    this._offset = this._buffer.shifted
+
+    try {
+      this._header = headers.decode(this._buffer.shift(512), this._filenameEncoding, this._allowUnknownFormat)
+    } catch (err) {
+      this._continueWrite(err)
+      return false
+    }
+
+    if (!this._header) return true
+
+    switch (this._header.type) {
+      case 'gnu-long-path':
+      case 'gnu-long-link-path':
+      case 'pax-global-header':
+      case 'pax-header':
+        this._longHeader = true
+        this._missing = this._header.size
+        return true
+    }
+
+    this._locked = true
+    this._applyLongHeaders()
+
+    if (this._header.size === 0 || this._header.type === 'directory') {
+      const stream = this._createStream()
+      stream.push(null)
+      this.emit('entry', this._header, stream, this._unlockBound)
+      return true
+    }
+
+    this._stream = this._createStream()
+    this._missing = this._header.size
+
+    this.emit('entry', this._header, this._stream, this._unlockBound)
+    return true
+  }
+
+  _applyLongHeaders () {
+    if (this._gnuLongPath) {
+      this._header.name = this._gnuLongPath
+      this._gnuLongPath = null
+    }
+
+    if (this._gnuLongLinkPath) {
+      this._header.linkname = this._gnuLongLinkPath
+      this._gnuLongLinkPath = null
+    }
+
+    if (this._pax) {
+      if (this._pax.path) this._header.name = this._pax.path
+      if (this._pax.linkpath) this._header.linkname = this._pax.linkpath
+      if (this._pax.size) this._header.size = parseInt(this._pax.size, 10)
+      this._header.pax = this._pax
+      this._pax = null
+    }
+  }
+
+  _decodeLongHeader (buf) {
+    switch (this._header.type) {
+      case 'gnu-long-path':
+        this._gnuLongPath = headers.decodeLongPath(buf, this._filenameEncoding)
+        break
+      case 'gnu-long-link-path':
+        this._gnuLongLinkPath = headers.decodeLongPath(buf, this._filenameEncoding)
+        break
+      case 'pax-global-header':
+        this._paxGlobal = headers.decodePax(buf)
+        break
+      case 'pax-header':
+        this._pax = this._paxGlobal === null
+          ? headers.decodePax(buf)
+          : Object.assign({}, this._paxGlobal, headers.decodePax(buf))
+        break
+    }
+  }
+
+  _consumeLongHeader () {
+    this._longHeader = false
+    this._missing = overflow(this._header.size)
+
+    const buf = this._buffer.shift(this._header.size)
+
+    try {
+      this._decodeLongHeader(buf)
+    } catch (err) {
+      this._continueWrite(err)
+      return false
+    }
+
+    return true
+  }
+
+  _consumeStream () {
+    const buf = this._buffer.shiftFirst(this._missing)
+    if (buf === null) return false
+
+    this._missing -= buf.byteLength
+    const drained = this._stream.push(buf)
+
+    if (this._missing === 0) {
+      this._stream.push(null)
+      if (drained) this._stream._detach()
+      return drained && this._locked === false
+    }
+
+    return drained
+  }
+
+  _createStream () {
+    return new Source(this, this._header, this._offset)
+  }
+
+  _update () {
+    while (this._buffer.buffered > 0 && !this.destroying) {
+      if (this._missing > 0) {
+        if (this._stream !== null) {
+          if (this._consumeStream() === false) return
+          continue
+        }
+
+        if (this._longHeader === true) {
+          if (this._missing > this._buffer.buffered) break
+          if (this._consumeLongHeader() === false) return false
+          continue
+        }
+
+        const ignore = this._buffer.shiftFirst(this._missing)
+        if (ignore !== null) this._missing -= ignore.byteLength
+        continue
+      }
+
+      if (this._buffer.buffered < 512) break
+      if (this._stream !== null || this._consumeHeader() === false) return
+    }
+
+    this._continueWrite(null)
+  }
+
+  _continueWrite (err) {
+    const cb = this._callback
+    this._callback = noop
+    cb(err)
   }
 
   _write (data, cb) {
-    const s = this._stream
-    const b = this._buffer
-    const missing = this._missing
-    if (data.byteLength) this._partial = true
-
-    // we do not reach end-of-chunk now. just forward it
-    if (data.byteLength < missing) {
-      this._missing -= data.byteLength
-      this._overflow = null
-      if (s) {
-        if (s.write(data, cb)) cb()
-        else s.once('drain', cb)
-        return
-      }
-      b.append(data)
-      return cb()
-    }
-
-    // end-of-chunk. the parser should call cb.
-    this._cb = cb
-    this._missing = 0
-
-    let overflow = null
-    if (data.byteLength > missing) {
-      overflow = data.subarray(missing)
-      data = data.subarray(0, missing)
-    }
-
-    if (s) s.end(data)
-    else b.append(data)
-
-    this._overflow = overflow
-    this._onparse()
+    this._callback = cb
+    this._buffer.push(data)
+    this._update()
   }
 
   _final (cb) {
-    cb(this._partial ? new Error('Unexpected end of data') : null)
+    this._finished = this._missing === 0 && this._buffer.buffered === 0
+    cb(this._finished ? null : new Error('Unexpected end of data'))
+  }
+
+  _predestroy () {
+    this._continueWrite(null)
+  }
+
+  _destroy (cb) {
+    if (this._stream) this._stream.destroy(getStreamError(this))
+    cb(null)
+  }
+
+  [Symbol.asyncIterator] () {
+    let error = null
+
+    let promiseResolve = null
+    let promiseReject = null
+
+    let entryStream = null
+    let entryCallback = null
+
+    const extract = this
+
+    this.on('entry', onentry)
+    this.on('error', (err) => { error = err })
+    this.on('close', onclose)
+
+    return {
+      [Symbol.asyncIterator] () {
+        return this
+      },
+      next () {
+        return new Promise(onnext)
+      },
+      return () {
+        return destroy(null)
+      },
+      throw (err) {
+        return destroy(err)
+      }
+    }
+
+    function consumeCallback (err) {
+      if (!entryCallback) return
+      const cb = entryCallback
+      entryCallback = null
+      cb(err)
+    }
+
+    function onnext (resolve, reject) {
+      if (error) {
+        return reject(error)
+      }
+
+      if (entryStream) {
+        resolve({ value: entryStream, done: false })
+        entryStream = null
+        return
+      }
+
+      promiseResolve = resolve
+      promiseReject = reject
+
+      consumeCallback(null)
+
+      if (extract._finished && promiseResolve) {
+        promiseResolve({ value: undefined, done: true })
+        promiseResolve = promiseReject = null
+      }
+    }
+
+    function onentry (header, stream, callback) {
+      entryCallback = callback
+      stream.on('error', noop) // no way around this due to tick sillyness
+
+      if (promiseResolve) {
+        promiseResolve({ value: stream, done: false })
+        promiseResolve = promiseReject = null
+      } else {
+        entryStream = stream
+      }
+    }
+
+    function onclose () {
+      consumeCallback(error)
+      if (!promiseResolve) return
+      if (error) promiseReject(error)
+      else promiseResolve({ value: undefined, done: true })
+      promiseResolve = promiseReject = null
+    }
+
+    function destroy (err) {
+      extract.destroy(err)
+      consumeCallback(err)
+      return new Promise((resolve, reject) => {
+        if (extract.destroyed) return resolve({ value: undefined, done: true })
+        extract.once('close', function () {
+          if (err) reject(err)
+          else resolve({ value: undefined, done: true })
+        })
+      })
+    }
   }
 }
 
 module.exports = function extract (opts) {
   return new Extract(opts)
+}
+
+function noop () {}
+
+function overflow (size) {
+  size &= 511
+  return size && 512 - size
 }
