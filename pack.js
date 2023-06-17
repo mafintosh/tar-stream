@@ -1,7 +1,7 @@
-const { constants } = require('fs')
 const { Readable, Writable, getStreamError } = require('streamx')
 const b4a = require('b4a')
 
+const constants = require('./constants')
 const headers = require('./headers')
 
 const DMODE = 0o755

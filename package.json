@@ -6,6 +6,9 @@
   "files": [
     "*.js"
   ],
+  "browser": {
+    "fs": false
+  },
   "scripts": {
     "test": "standard && brittle test/*.js"
   },
