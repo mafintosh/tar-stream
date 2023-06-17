@@ -108,8 +108,9 @@ class Extract extends Writable {
     this._stream = null
     this._missing = 0
     this._longHeader = false
-    this._callback = null
+    this._callback = noop
     this._locked = false
+    this._finished = false
     this._pax = null
     this._paxGlobal = null
     this._gnuLongPath = null
@@ -286,7 +287,8 @@ class Extract extends Writable {
   }
 
   _final (cb) {
-    cb(this._missing > 0 || this._buffer.buffered > 0 ? new Error('Unexpected end of data') : null)
+    this._finished = this._missing === 0 && this._buffer.buffered === 0
+    cb(this._finished ? null : new Error('Unexpected end of data'))
   }
 
   _predestroy () {
@@ -296,6 +298,98 @@ class Extract extends Writable {
   _destroy (cb) {
     if (this._stream) this._stream.destroy(getStreamError(this))
     cb(null)
+  }
+
+  [Symbol.asyncIterator] () {
+    let error = null
+
+    let promiseResolve = null
+    let promiseReject = null
+
+    let entryStream = null
+    let entryCallback = null
+
+    const extract = this
+
+    this.on('entry', onentry)
+    this.on('error', (err) => { error = err })
+    this.on('close', onclose)
+
+    return {
+      [Symbol.asyncIterator] () {
+        return this
+      },
+      next () {
+        return new Promise(onnext)
+      },
+      return () {
+        return destroy(null)
+      },
+      throw (err) {
+        return destroy(err)
+      }
+    }
+
+    function consumeCallback (err) {
+      if (!entryCallback) return
+      const cb = entryCallback
+      entryCallback = null
+      cb(err)
+    }
+
+    function onnext (resolve, reject) {
+      if (error) {
+        return reject(error)
+      }
+
+      if (entryStream) {
+        resolve({ value: entryStream, done: false })
+        entryStream = null
+        return
+      }
+
+      promiseResolve = resolve
+      promiseReject = reject
+
+      consumeCallback(null)
+
+      if (extract._finished && promiseResolve) {
+        promiseResolve({ value: undefined, done: true })
+        promiseResolve = promiseReject = null
+      }
+    }
+
+    function onentry (header, stream, callback) {
+      entryCallback = callback
+      stream.on('error', noop) // no way around this due to tick sillyness
+
+      if (promiseResolve) {
+        promiseResolve({ value: stream, done: false })
+        promiseResolve = promiseReject = null
+      } else {
+        entryStream = stream
+      }
+    }
+
+    function onclose () {
+      consumeCallback(error)
+      if (!promiseResolve) return
+      if (error) promiseReject(error)
+      else promiseResolve({ value: undefined, done: true })
+      promiseResolve = promiseReject = null
+    }
+
+    function destroy (err) {
+      extract.destroy(err)
+      consumeCallback(err)
+      return new Promise((resolve, reject) => {
+        if (extract.destroyed) return resolve({ value: undefined, done: true })
+        extract.once('close', function () {
+          if (err) reject(err)
+          else resolve({ value: undefined, done: true })
+        })
+      })
+    }
   }
 }
 

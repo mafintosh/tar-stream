@@ -759,6 +759,22 @@ test('unknown format attempts to extract if allowed', function (t) {
   }
 })
 
+test('extract streams are async iterators', async function (t) {
+  const extract = tar.extract()
+  const b = fs.readFileSync(fixtures.MULTI_FILE_TAR)
+
+  extract.end(b)
+
+  const expected = ['file-1.txt', 'file-2.txt']
+
+  for await (const entry of extract) {
+    t.is(entry.header.name, expected.shift())
+    entry.resume()
+    t.comment('wait a bit...')
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+})
+
 function clamp (index, len, defaultValue) {
   if (typeof index !== 'number') return defaultValue
   index = ~~index // Coerce to integer.
