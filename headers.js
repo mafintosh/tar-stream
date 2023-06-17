@@ -34,15 +34,15 @@ exports.decodePax = function decodePax (buf) {
   while (buf.length) {
     let i = 0
     while (i < buf.length && buf[i] !== 32) i++
-    const len = parseInt(buf.slice(0, i).toString(), 10)
+    const len = parseInt(buf.subarray(0, i).toString(), 10)
     if (!len) return result
 
-    const b = buf.slice(i + 1, len - 1).toString()
+    const b = b4a.toString(buf.subarray(i + 1, len - 1))
     const keyIndex = b.indexOf('=')
     if (keyIndex === -1) return result
     result[b.slice(0, keyIndex)] = b.slice(keyIndex + 1)
 
-    buf = buf.slice(len)
+    buf = buf.subarray(len)
   }
 
   return result
@@ -115,12 +115,11 @@ exports.decode = function decode (buf, filenameEncoding, allowUnknownFormat) {
   // valid checksum
   if (c !== decodeOct(buf, 148, 8)) throw new Error('Invalid tar header. Maybe the tar is corrupted or it needs to be gunzipped?')
 
-  if (USTAR_MAGIC.compare(buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0) {
+  if (isUSTAR(buf)) {
     // ustar (posix) format.
     // prepend prefix, if present.
     if (buf[345]) name = decodeStr(buf, 345, 155, filenameEncoding) + '/' + name
-  } else if (GNU_MAGIC.compare(buf, MAGIC_OFFSET, MAGIC_OFFSET + 6) === 0 &&
-             GNU_VER.compare(buf, VERSION_OFFSET, VERSION_OFFSET + 2) === 0) {
+  } else if (isGNU(buf)) {
     // 'gnu'/'oldgnu' format. Similar to ustar, but has support for incremental and
     // multi-volume tarballs.
   } else {
@@ -144,8 +143,18 @@ exports.decode = function decode (buf, filenameEncoding, allowUnknownFormat) {
     uname,
     gname,
     devmajor,
-    devminor
+    devminor,
+    pax: null
   }
+}
+
+function isUSTAR (buf) {
+  return b4a.equals(USTAR_MAGIC, buf.subarray(MAGIC_OFFSET, MAGIC_OFFSET + 6))
+}
+
+function isGNU (buf) {
+  return b4a.equals(GNU_MAGIC, buf.subarray(MAGIC_OFFSET, MAGIC_OFFSET + 6)) &&
+    b4a.equals(GNU_VER, buf.subarray(VERSION_OFFSET, VERSION_OFFSET + 2))
 }
 
 function clamp (index, len, defaultValue) {
@@ -232,7 +241,7 @@ function cksum (block) {
 function encodeOct (val, n) {
   val = val.toString(8)
   if (val.length > n) return SEVENS.slice(0, n) + ' '
-  else return ZEROS.slice(0, n - val.length) + val + ' '
+  return ZEROS.slice(0, n - val.length) + val + ' '
 }
 
 /* Copied from the node-tar repo and modified to meet
@@ -267,7 +276,7 @@ function parse256 (buf) {
 }
 
 function decodeOct (val, offset, length) {
-  val = val.slice(offset, offset + length)
+  val = val.subarray(offset, offset + length)
   offset = 0
 
   // If prefixed with 0x80 then parse as a base-256 integer
@@ -279,12 +288,12 @@ function decodeOct (val, offset, length) {
     const end = clamp(indexOf(val, 32, offset, val.length), val.length, val.length)
     while (offset < end && val[offset] === 0) offset++
     if (end === offset) return 0
-    return parseInt(val.slice(offset, end).toString(), 8)
+    return parseInt(val.subarray(offset, end).toString(), 8)
   }
 }
 
 function decodeStr (val, offset, length, encoding) {
-  return val.slice(offset, indexOf(val, 0, offset, offset + length)).toString(encoding)
+  return b4a.toString(val.subarray(offset, indexOf(val, 0, offset, offset + length)), encoding)
 }
 
 function addLength (str) {

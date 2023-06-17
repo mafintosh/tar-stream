@@ -4,16 +4,6 @@ const fs = require('fs')
 const tar = require('..')
 const fixtures = require('./fixtures')
 
-const clamp = function (index, len, defaultValue) {
-  if (typeof index !== 'number') return defaultValue
-  index = ~~index // Coerce to integer.
-  if (index >= len) return len
-  if (index >= 0) return index
-  index += len
-  if (index >= 0) return index
-  return 0
-}
-
 test('one-file', function (t) {
   t.plan(3)
 
@@ -33,7 +23,8 @@ test('one-file', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -69,7 +60,8 @@ test('chunked-one-file', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -97,52 +89,6 @@ test('multi-file', function (t) {
   const extract = tar.extract()
   let noEntries = false
 
-  const onfile1 = function (header, stream, cb) {
-    t.alike(header, {
-      name: 'file-1.txt',
-      mode: 0o644,
-      uid: 501,
-      gid: 20,
-      size: 12,
-      mtime: new Date(1387580181000),
-      type: 'file',
-      linkname: null,
-      uname: 'maf',
-      gname: 'staff',
-      devmajor: 0,
-      devminor: 0
-    })
-
-    extract.on('entry', onfile2)
-    stream.pipe(concat(function (data) {
-      t.is(data.toString(), 'i am file-1\n')
-      cb()
-    }))
-  }
-
-  const onfile2 = function (header, stream, cb) {
-    t.alike(header, {
-      name: 'file-2.txt',
-      mode: 0o644,
-      uid: 501,
-      gid: 20,
-      size: 12,
-      mtime: new Date(1387580181000),
-      type: 'file',
-      linkname: null,
-      uname: 'maf',
-      gname: 'staff',
-      devmajor: 0,
-      devminor: 0
-    })
-
-    stream.pipe(concat(function (data) {
-      noEntries = true
-      t.is(data.toString(), 'i am file-2\n')
-      cb()
-    }))
-  }
-
   extract.once('entry', onfile1)
 
   extract.on('finish', function () {
@@ -150,15 +96,8 @@ test('multi-file', function (t) {
   })
 
   extract.end(fs.readFileSync(fixtures.MULTI_FILE_TAR))
-})
 
-test('chunked-multi-file', function (t) {
-  t.plan(5)
-
-  const extract = tar.extract()
-  let noEntries = false
-
-  const onfile1 = function (header, stream, cb) {
+  function onfile1 (header, stream, cb) {
     t.alike(header, {
       name: 'file-1.txt',
       mode: 0o644,
@@ -171,7 +110,8 @@ test('chunked-multi-file', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     extract.on('entry', onfile2)
@@ -181,7 +121,7 @@ test('chunked-multi-file', function (t) {
     }))
   }
 
-  const onfile2 = function (header, stream, cb) {
+  function onfile2 (header, stream, cb) {
     t.alike(header, {
       name: 'file-2.txt',
       mode: 0o644,
@@ -194,7 +134,8 @@ test('chunked-multi-file', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -203,6 +144,13 @@ test('chunked-multi-file', function (t) {
       cb()
     }))
   }
+})
+
+test('chunked-multi-file', function (t) {
+  t.plan(5)
+
+  const extract = tar.extract()
+  let noEntries = false
 
   extract.once('entry', onfile1)
 
@@ -215,6 +163,54 @@ test('chunked-multi-file', function (t) {
     extract.write(b.subarray(i, clamp(i + 321, b.length, b.length)))
   }
   extract.end()
+
+  function onfile1 (header, stream, cb) {
+    t.alike(header, {
+      name: 'file-1.txt',
+      mode: 0o644,
+      uid: 501,
+      gid: 20,
+      size: 12,
+      mtime: new Date(1387580181000),
+      type: 'file',
+      linkname: null,
+      uname: 'maf',
+      gname: 'staff',
+      devmajor: 0,
+      devminor: 0,
+      pax: null
+    })
+
+    extract.on('entry', onfile2)
+    stream.pipe(concat(function (data) {
+      t.is(data.toString(), 'i am file-1\n')
+      cb()
+    }))
+  }
+
+  function onfile2 (header, stream, cb) {
+    t.alike(header, {
+      name: 'file-2.txt',
+      mode: 0o644,
+      uid: 501,
+      gid: 20,
+      size: 12,
+      mtime: new Date(1387580181000),
+      type: 'file',
+      linkname: null,
+      uname: 'maf',
+      gname: 'staff',
+      devmajor: 0,
+      devminor: 0,
+      pax: null
+    })
+
+    stream.pipe(concat(function (data) {
+      noEntries = true
+      t.is(data.toString(), 'i am file-2\n')
+      cb()
+    }))
+  }
 })
 
 test('pax', function (t) {
@@ -260,7 +256,15 @@ test('types', function (t) {
   const extract = tar.extract()
   let noEntries = false
 
-  const ondir = function (header, stream, cb) {
+  extract.once('entry', ondir)
+
+  extract.on('finish', function () {
+    t.ok(noEntries)
+  })
+
+  extract.end(fs.readFileSync(fixtures.TYPES_TAR))
+
+  function ondir (header, stream, cb) {
     t.alike(header, {
       name: 'directory',
       mode: 0o755,
@@ -273,7 +277,8 @@ test('types', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
     stream.on('data', function () {
       t.ok(false)
@@ -282,7 +287,7 @@ test('types', function (t) {
     cb()
   }
 
-  const onlink = function (header, stream, cb) {
+  function onlink (header, stream, cb) {
     t.alike(header, {
       name: 'directory-link',
       mode: 0o755,
@@ -295,7 +300,8 @@ test('types', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
     stream.on('data', function () {
       t.ok(false)
@@ -303,14 +309,6 @@ test('types', function (t) {
     noEntries = true
     cb()
   }
-
-  extract.once('entry', ondir)
-
-  extract.on('finish', function () {
-    t.ok(noEntries)
-  })
-
-  extract.end(fs.readFileSync(fixtures.TYPES_TAR))
 })
 
 test('long-name', function (t) {
@@ -332,7 +330,8 @@ test('long-name', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -363,13 +362,13 @@ test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
       gid: 20,
       size: 4,
       mtime: new Date(1387588646000),
-      pax: { 'SCHILY.dev': '16777217', 'SCHILY.ino': '3599143', 'SCHILY.nlink': '1', atime: '1387589077', ctime: '1387588646', path: 'høllø.txt' },
       type: 'file',
       linkname: null,
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: { 'SCHILY.dev': '16777217', 'SCHILY.ino': '3599143', 'SCHILY.nlink': '1', atime: '1387589077', ctime: '1387588646', path: 'høllø.txt' }
     })
 
     stream.pipe(concat(function (data) {
@@ -400,13 +399,13 @@ test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
       gid: 20,
       size: 8,
       mtime: new Date(1387580181000),
-      pax: { path: 'høstål.txt' },
       type: 'file',
       linkname: null,
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: { path: 'høstål.txt' }
     })
 
     stream.pipe(concat(function (data) {
@@ -522,7 +521,8 @@ test('base 256 size', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
     cb()
   })
@@ -554,7 +554,8 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
       uname: 'root',
       gname: 'root',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -610,7 +611,8 @@ test('gnu', function (t) { // can correctly unpack gnu-tar format
       uname: 'myuser',
       gname: 'mygroup',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -650,7 +652,8 @@ test('gnu-incremental', function (t) {
       uname: 'myuser',
       gname: 'mygroup',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -699,7 +702,15 @@ test('unknown format attempts to extract if allowed', function (t) {
   const extract = tar.extract({ allowUnknownFormat: true })
   let noEntries = false
 
-  const onfile1 = function (header, stream, cb) {
+  extract.once('entry', onfile1)
+
+  extract.on('finish', function () {
+    t.ok(noEntries)
+  })
+
+  extract.end(fs.readFileSync(fixtures.UNKNOWN_FORMAT))
+
+  function onfile1 (header, stream, cb) {
     t.alike(header, {
       name: 'file-1.txt',
       mode: 0o644,
@@ -712,7 +723,8 @@ test('unknown format attempts to extract if allowed', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     extract.on('entry', onfile2)
@@ -722,7 +734,7 @@ test('unknown format attempts to extract if allowed', function (t) {
     }))
   }
 
-  const onfile2 = function (header, stream, cb) {
+  function onfile2 (header, stream, cb) {
     t.alike(header, {
       name: 'file-2.txt',
       mode: 0o644,
@@ -735,7 +747,8 @@ test('unknown format attempts to extract if allowed', function (t) {
       uname: 'maf',
       gname: 'staff',
       devmajor: 0,
-      devminor: 0
+      devminor: 0,
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -744,12 +757,14 @@ test('unknown format attempts to extract if allowed', function (t) {
       cb()
     }))
   }
-
-  extract.once('entry', onfile1)
-
-  extract.on('finish', function () {
-    t.ok(noEntries)
-  })
-
-  extract.end(fs.readFileSync(fixtures.UNKNOWN_FORMAT))
 })
+
+function clamp (index, len, defaultValue) {
+  if (typeof index !== 'number') return defaultValue
+  index = ~~index // Coerce to integer.
+  if (index >= len) return len
+  if (index >= 0) return index
+  index += len
+  if (index >= 0) return index
+  return 0
+}
