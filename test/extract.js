@@ -251,7 +251,7 @@ test('pax', function (t) {
 })
 
 test('types', function (t) {
-  t.plan(3)
+  t.plan(5)
 
   const extract = tar.extract()
   let noEntries = false
@@ -283,6 +283,9 @@ test('types', function (t) {
     stream.on('data', function () {
       t.ok(false)
     })
+    stream.on('end', function () {
+      t.pass('ended')
+    })
     extract.once('entry', onlink)
     cb()
   }
@@ -305,6 +308,9 @@ test('types', function (t) {
     })
     stream.on('data', function () {
       t.ok(false)
+    })
+    stream.on('end', function () {
+      t.pass('ended')
     })
     noEntries = true
     cb()
