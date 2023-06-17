@@ -20,13 +20,12 @@
   },
   "homepage": "https://github.com/mafintosh/tar-stream",
   "dependencies": {
-    "b4a": "^1.6.1",
-    "bl": "^6.0.0",
-    "streamx": "^2.12.5"
+    "b4a": "^1.6.4",
+    "streamx": "^2.15.0"
   },
   "devDependencies": {
-    "brittle": "^3.1.1",
+    "brittle": "^3.3.2",
     "concat-stream": "^2.0.0",
-    "standard": "^17.0.0"
+    "standard": "^17.0.1"
   }
 }

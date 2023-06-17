@@ -1,37 +1,80 @@
-const bl = require('bl')
-const { Writable, PassThrough } = require('streamx')
+const { Writable, PassThrough, getStreamError } = require('streamx')
+const FIFO = require('fast-fifo')
+const b4a = require('b4a')
 const headers = require('./headers')
 
-const noop = function () {}
+const EMPTY = b4a.alloc(0)
 
-const overflow = function (size) {
-  size &= 511
-  return size && 512 - size
-}
+class BufferList {
+  constructor () {
+    this.buffered = 0
+    this.shifted = 0
+    this.queue = new FIFO()
+  }
 
-const emptyStream = function (self, offset) {
-  const s = new Source(self, offset)
-  s.end()
-  return s
-}
+  push (buffer) {
+    this.buffered += buffer.byteLength
+    this.queue.push(buffer)
+  }
 
-const mixinPax = function (header, pax) {
-  if (pax.path) header.name = pax.path
-  if (pax.linkpath) header.linkname = pax.linkpath
-  if (pax.size) header.size = parseInt(pax.size, 10)
-  header.pax = pax
-  return header
+  shift (size) {
+    if (size > this.buffered) return null
+    if (size === 0) return EMPTY
+
+    let chunk = this._next(size)
+
+    if (size === chunk.byteLength) return chunk // likely case
+
+    const chunks = [chunk]
+
+    while ((size -= chunk.byteLength) > 0) {
+      chunk = this._next(size)
+      chunks.push(chunk)
+    }
+
+    return b4a.concat(chunks)
+  }
+
+  _next (size) {
+    const buf = this.queue.peek()
+    const rem = buf.byteLength - this.shifted
+
+    if (size >= rem) {
+      const sub = this.shifted ? buf.subarray(this.shifted, buf.byteLength) : buf
+      this.queue.shift()
+      this.shifted = 0
+      this.buffered -= rem
+      return sub
+    }
+
+    this.buffered -= size
+    return buf.subarray(this.shifted, (this.shifted += size))
+  }
 }
 
 class Source extends PassThrough {
   constructor (self, offset) {
     super()
     this._parent = self
+    this._continue = null
     this.offset = offset
+    this.on('drain', this._ondrain)
+  }
+
+  _ondrain () {
+    if (this._continue === null) return
+    const cb = this._continue
+    this._continue = null
+    cb(null)
+  }
+
+  _forward (data, cb) {
+    if (this.write(data, cb) === true) cb(null)
+    this._continue = cb
   }
 
   _predestroy () {
-    this._parent.destroy()
+    this._parent.destroy(getStreamError(this))
   }
 }
 
@@ -39,10 +82,10 @@ class Extract extends Writable {
   constructor (opts) {
     super(opts)
 
-    opts = opts || {}
+    if (!opts) opts = {}
 
     this._offset = 0
-    this._buffer = bl()
+    this._buffer = new BufferList()
     this._missing = 0
     this._partial = false
     this._onparse = noop
@@ -78,37 +121,33 @@ class Extract extends Writable {
     }
 
     const ondrain = function () {
-      self._buffer.consume(overflow(self._header.size))
+      self._buffer.shift(overflow(self._header.size))
       self._parse(512, onheader)
       oncontinue()
     }
 
     const onpaxglobalheader = function () {
       const size = self._header.size
-      self._paxGlobal = headers.decodePax(b.slice(0, size))
-      b.consume(size)
+      self._paxGlobal = headers.decodePax(b.shift(size))
       onstreamend()
     }
 
     const onpaxheader = function () {
       const size = self._header.size
-      self._pax = headers.decodePax(b.slice(0, size))
+      self._pax = headers.decodePax(b.shift(size))
       if (self._paxGlobal) self._pax = Object.assign({}, self._paxGlobal, self._pax)
-      b.consume(size)
       onstreamend()
     }
 
     const ongnulongpath = function () {
       const size = self._header.size
-      this._gnuLongPath = headers.decodeLongPath(b.slice(0, size), opts.filenameEncoding)
-      b.consume(size)
+      this._gnuLongPath = headers.decodeLongPath(b.shift(size), opts.filenameEncoding)
       onstreamend()
     }
 
     const ongnulonglinkpath = function () {
       const size = self._header.size
-      this._gnuLongLinkPath = headers.decodeLongPath(b.slice(0, size), opts.filenameEncoding)
-      b.consume(size)
+      this._gnuLongLinkPath = headers.decodeLongPath(b.shift(size), opts.filenameEncoding)
       onstreamend()
     }
 
@@ -116,11 +155,10 @@ class Extract extends Writable {
       const offset = self._offset
       let header
       try {
-        header = self._header = headers.decode(b.slice(0, 512), opts.filenameEncoding, opts.allowUnknownFormat)
+        header = self._header = headers.decode(b.shift(512), opts.filenameEncoding, opts.allowUnknownFormat)
       } catch (err) {
         self.destroy(err)
       }
-      b.consume(512)
 
       if (!header) {
         self._parse(512, onheader)
@@ -211,11 +249,10 @@ class Extract extends Writable {
       this._missing -= data.byteLength
       this._overflow = null
       if (s) {
-        if (s.write(data, cb)) cb()
-        else s.once('drain', cb)
+        s._forward(data, cb)
         return
       }
-      b.append(data)
+      b.push(data)
       return cb()
     }
 
@@ -229,8 +266,8 @@ class Extract extends Writable {
       data = data.subarray(0, missing)
     }
 
-    if (s) s.end(data)
-    else b.append(data)
+    if (s) s.end(data.byteLength === 0 ? null : data)
+    else b.push(data)
 
     this._overflow = overflow
     this._onparse()
@@ -239,8 +276,34 @@ class Extract extends Writable {
   _final (cb) {
     cb(this._partial ? new Error('Unexpected end of data') : null)
   }
+
+  _destroy (cb) {
+    if (this._stream) this._stream.destroy(getStreamError(this))
+    cb(null)
+  }
 }
 
 module.exports = function extract (opts) {
   return new Extract(opts)
+}
+
+function noop () {}
+
+function overflow (size) {
+  size &= 511
+  return size && 512 - size
+}
+
+function emptyStream (self, offset) {
+  const s = new Source(self, offset)
+  s.end()
+  return s
+}
+
+function mixinPax (header, pax) {
+  if (pax.path) header.name = pax.path
+  if (pax.linkpath) header.linkname = pax.linkpath
+  if (pax.size) header.size = parseInt(pax.size, 10)
+  header.pax = pax
+  return header
 }
