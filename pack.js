@@ -11,7 +11,7 @@ const END_OF_TAR = b4a.alloc(1024)
 
 class Sink extends Writable {
   constructor (pack, header, callback) {
-    super({ mapWritable })
+    super({ mapWritable, eagerOpen: true })
 
     this.written = 0
     this.header = header
@@ -49,6 +49,10 @@ class Sink extends Writable {
       this._pack._encode(this.header)
     }
 
+    if (this._isVoid) {
+      this._finish()
+    }
+
     cb(null)
   }
 
@@ -67,7 +71,10 @@ class Sink extends Writable {
     this._pack._drain = cb
   }
 
-  _final (cb) {
+  _finish () {
+    if (this._finished) return
+    this._finished = true
+
     if (this._isLinkname) {
       this.header.linkname = this._linkname ? b4a.toString(this._linkname, 'utf-8') : ''
       this._pack._encode(this.header)
@@ -75,13 +82,15 @@ class Sink extends Writable {
 
     overflow(this._pack, this.header.size)
 
+    this._pack._done(this)
+  }
+
+  _final (cb) {
     if (this.written !== this.header.size) { // corrupting tar
       return cb(new Error('Size mismatch'))
     }
 
-    this._pack._done(this)
-    this._finished = true
-
+    this._finish()
     cb(null)
   }
 
@@ -142,7 +151,6 @@ class Pack extends Readable {
     }
 
     if (sink._isVoid) {
-      sink.end()
       return sink
     }
 
