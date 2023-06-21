@@ -24,6 +24,7 @@
   "homepage": "https://github.com/mafintosh/tar-stream",
   "dependencies": {
     "b4a": "^1.6.4",
+    "fast-fifo": "^1.2.0",
     "streamx": "^2.15.0"
   },
   "devDependencies": {
