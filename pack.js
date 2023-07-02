@@ -33,6 +33,15 @@ class Sink extends Writable {
     if (this._pack._stream === this) this._continueOpen()
   }
 
+  _continuePack (err) {
+    if (this._callback === null) return
+
+    const callback = this._callback
+    this._callback = null
+
+    callback(err)
+  }
+
   _continueOpen () {
     if (this._pack._stream === null) this._pack._stream = this
 
@@ -51,6 +60,7 @@ class Sink extends Writable {
 
     if (this._isVoid) {
       this._finish()
+      this._continuePack(null)
     }
 
     cb(null)
@@ -105,8 +115,7 @@ class Sink extends Writable {
   _destroy (cb) {
     this._pack._done(this)
 
-    if (this._finished) this._callback(null)
-    else this._callback(this._getError())
+    this._continuePack(this._finished ? null : this._getError())
 
     cb()
   }
