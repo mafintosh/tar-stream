@@ -124,6 +124,30 @@ test('types', function (t) {
   }))
 })
 
+test('empty directory body is valid', function (t) {
+  t.plan(1)
+
+  const pack = tar.pack()
+
+  pack.entry({
+    name: 'directory',
+    mtime: new Date(1387580181000),
+    type: 'directory',
+    mode: 0o755,
+    uname: 'maf',
+    gname: 'staff',
+    uid: 501,
+    gid: 20
+  }, '')
+
+  pack.finalize()
+
+  pack.resume()
+
+  pack.on('error', () => t.fail('should not throw'))
+  pack.on('close', () => t.pass('closed'))
+})
+
 test('long-name', function (t) {
   t.plan(2)
 
