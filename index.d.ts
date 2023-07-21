@@ -31,7 +31,6 @@ declare namespace tarstream {
   }
 
   interface Sink extends NodeJS.WritableStream {
-    destroy(): void
   }
 
   interface ExtractOptions {
