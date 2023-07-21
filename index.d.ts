@@ -37,12 +37,17 @@ declare namespace tarstream {
     filenameEncoding?: string
   }
 
+  interface Source extends NodeJS.ReadableStream { 
+    header: Header
+    offset: number
+  }
+
   interface Extract extends NodeJS.WritableStream {
     on(
       event: 'entry',
       callback: (
         header: Header,
-        stream: NodeJS.ReadableStream,
+        stream: Source,
         next: () => void
       ) => void
     ): void
@@ -50,6 +55,7 @@ declare namespace tarstream {
     on(event: 'finish', callback: () => void)
     on(event: 'error', callback: (error: Error) => void)
     destroy(error?: Error): void
+    [Symbol.asyncIterator](): AsyncIterableIterator<Source>
   }
 
   interface Module {
