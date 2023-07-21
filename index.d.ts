@@ -4,7 +4,7 @@ declare namespace tarstream {
     size: number
     mode: number
     mtime: Date
-    type: string
+    type: 'file' | 'link' | 'symlink' | 'directory' | 'block-device' | 'character-device' | 'fifo' | 'contiguous-file'
     linkname: string
     uid: number
     gid: number
