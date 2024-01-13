@@ -1,9 +1,8 @@
 const { Writable, Readable, getStreamError } = require('streamx')
 const FIFO = require('fast-fifo')
-const b4a = require('b4a')
 const headers = require('./headers')
 
-const EMPTY = b4a.alloc(0)
+const EMPTY = Buffer.alloc(0)
 
 class BufferList {
   constructor () {
@@ -38,7 +37,7 @@ class BufferList {
       chunks.push(chunk)
     }
 
-    return b4a.concat(chunks)
+    return Buffer.concat(chunks)
   }
 
   _next (size) {

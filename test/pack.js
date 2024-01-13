@@ -1,7 +1,6 @@
 const test = require('brittle')
 const concat = require('concat-stream')
 const fs = require('fs')
-const b4a = require('b4a')
 const { Writable } = require('streamx')
 const tar = require('..')
 const fixtures = require('./fixtures')
@@ -256,7 +255,7 @@ test('backpressure', async function (t) {
         gid: 20
       }
 
-      const buffer = b4a.alloc(1024)
+      const buffer = Buffer.alloc(1024)
 
       pack.entry(header, buffer, next)
     } else {

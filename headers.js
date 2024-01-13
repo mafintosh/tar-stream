@@ -3,10 +3,10 @@ const b4a = require('b4a')
 const ZEROS = '0000000000000000000'
 const SEVENS = '7777777777777777777'
 const ZERO_OFFSET = '0'.charCodeAt(0)
-const USTAR_MAGIC = b4a.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00]) // ustar\x00
-const USTAR_VER = b4a.from([ZERO_OFFSET, ZERO_OFFSET])
-const GNU_MAGIC = b4a.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x20]) // ustar\x20
-const GNU_VER = b4a.from([0x20, 0x00])
+const USTAR_MAGIC = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00]) // ustar\x00
+const USTAR_VER = Buffer.from([ZERO_OFFSET, ZERO_OFFSET])
+const GNU_MAGIC = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x20]) // ustar\x20
+const GNU_VER = Buffer.from([0x20, 0x00])
 const MASK = 0o7777
 const MAGIC_OFFSET = 257
 const VERSION_OFFSET = 263
@@ -25,7 +25,7 @@ exports.encodePax = function encodePax (opts) { // TODO: encode more stuff in pa
       result += addLength(' ' + key + '=' + pax[key] + '\n')
     }
   }
-  return b4a.from(result)
+  return Buffer.from(result)
 }
 
 exports.decodePax = function decodePax (buf) {
@@ -49,22 +49,22 @@ exports.decodePax = function decodePax (buf) {
 }
 
 exports.encode = function encode (opts) {
-  const buf = b4a.alloc(512)
+  const buf = Buffer.alloc(512)
   let name = opts.name
   let prefix = ''
 
   if (opts.typeflag === 5 && name[name.length - 1] !== '/') name += '/'
-  if (b4a.byteLength(name) !== name.length) return null // utf-8
+  if (Buffer.byteLength(name) !== name.length) return null // utf-8
 
-  while (b4a.byteLength(name) > 100) {
+  while (Buffer.byteLength(name) > 100) {
     const i = name.indexOf('/')
     if (i === -1) return null
     prefix += prefix ? '/' + name.slice(0, i) : name.slice(0, i)
     name = name.slice(i + 1)
   }
 
-  if (b4a.byteLength(name) > 100 || b4a.byteLength(prefix) > 155) return null
-  if (opts.linkname && b4a.byteLength(opts.linkname) > 100) return null
+  if (Buffer.byteLength(name) > 100 || Buffer.byteLength(prefix) > 155) return null
+  if (opts.linkname && Buffer.byteLength(opts.linkname) > 100) return null
 
   b4a.write(buf, name)
   b4a.write(buf, encodeOct(opts.mode & MASK, 6), 100)
@@ -313,7 +313,7 @@ function decodeStr (val, offset, length, encoding) {
 }
 
 function addLength (str) {
-  const len = b4a.byteLength(str)
+  const len = Buffer.byteLength(str)
   let digits = Math.floor(Math.log(len) / Math.log(10)) + 1
   if (len + digits >= Math.pow(10, digits)) digits++
 
