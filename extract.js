@@ -20,7 +20,7 @@ class BufferList {
   }
 
   shiftFirst (size) {
-    return this._buffered === 0 ? null : this._next(size)
+    return this.buffered === 0 ? null : this._next(size)
   }
 
   shift (size) {
