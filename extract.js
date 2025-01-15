@@ -149,6 +149,8 @@ class Extract extends Writable {
 
     if (!this._header) return true
 
+    this._header.byteOffset = this._buffer.shifted
+
     switch (this._header.type) {
       case 'gnu-long-path':
       case 'gnu-long-link-path':
@@ -169,9 +171,8 @@ class Extract extends Writable {
 
     this._stream = this._createStream()
     this._missing = this._header.size
-    const header = { ...this._header, contentsByteOffset: this._buffer.shifted }
 
-    this.emit('entry', header, this._stream, this._unlockBound)
+    this.emit('entry', this._header, this._stream, this._unlockBound)
     return true
   }
 

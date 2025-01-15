@@ -17,6 +17,7 @@ test('one-file', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -24,8 +25,7 @@ test('one-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -55,6 +55,7 @@ test('chunked-one-file', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -62,8 +63,7 @@ test('chunked-one-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -106,6 +106,7 @@ test('multi-file', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -113,8 +114,7 @@ test('multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     extract.on('entry', onfile2)
@@ -131,6 +131,7 @@ test('multi-file', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 1536,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -138,8 +139,7 @@ test('multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 1536
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -175,6 +175,7 @@ test('chunked-multi-file', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -182,8 +183,7 @@ test('chunked-multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     extract.on('entry', onfile2)
@@ -200,6 +200,7 @@ test('chunked-multi-file', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 1536,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -207,8 +208,7 @@ test('chunked-multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 1536
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -232,6 +232,7 @@ test('pax', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 1536,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -239,8 +240,7 @@ test('pax', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: { path: 'pax.txt', special: 'sauce' },
-      contentsByteOffset: 1536
+      pax: { path: 'pax.txt', special: 'sauce' }
     })
 
     stream.pipe(concat(function (data) {
@@ -278,6 +278,7 @@ test('types', function (t) {
       uid: 501,
       gid: 20,
       size: 0,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'directory',
       linkname: null,
@@ -304,6 +305,7 @@ test('types', function (t) {
       uid: 501,
       gid: 20,
       size: 0,
+      byteOffset: 1024,
       mtime: new Date(1387580181000),
       type: 'symlink',
       linkname: 'directory',
@@ -337,6 +339,7 @@ test('long-name', function (t) {
       uid: 501,
       gid: 20,
       size: 16,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -344,8 +347,7 @@ test('long-name', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -375,6 +377,7 @@ test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
       uid: 501,
       gid: 20,
       size: 4,
+      byteOffset: 1536,
       mtime: new Date(1387588646000),
       type: 'file',
       linkname: null,
@@ -382,8 +385,7 @@ test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: { 'SCHILY.dev': '16777217', 'SCHILY.ino': '3599143', 'SCHILY.nlink': '1', atime: '1387589077', ctime: '1387588646', path: 'høllø.txt' },
-      contentsByteOffset: 1536
+      pax: { 'SCHILY.dev': '16777217', 'SCHILY.ino': '3599143', 'SCHILY.nlink': '1', atime: '1387589077', ctime: '1387588646', path: 'høllø.txt' }
     })
 
     stream.pipe(concat(function (data) {
@@ -413,6 +415,7 @@ test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
       uid: 501,
       gid: 20,
       size: 8,
+      byteOffset: 1536,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -420,8 +423,7 @@ test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: { path: 'høstål.txt' },
-      contentsByteOffset: 1536
+      pax: { path: 'høstål.txt' }
     })
 
     stream.pipe(concat(function (data) {
@@ -531,6 +533,7 @@ test('base 256 size', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -538,8 +541,7 @@ test('base 256 size', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
     cb()
   })
@@ -565,6 +567,7 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
       uid: 0,
       gid: 0,
       size: 14,
+      byteOffset: 512,
       mtime: new Date(1495941034000),
       type: 'file',
       linkname: null,
@@ -572,8 +575,7 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
       gname: 'root',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -623,6 +625,7 @@ test('gnu', function (t) { // can correctly unpack gnu-tar format
       uid: 12345,
       gid: 67890,
       size: 14,
+      byteOffset: 512,
       mtime: new Date(1559239869000),
       type: 'file',
       linkname: null,
@@ -630,8 +633,7 @@ test('gnu', function (t) { // can correctly unpack gnu-tar format
       gname: 'mygroup',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -665,6 +667,7 @@ test('gnu-incremental', function (t) {
       uid: 12345,
       gid: 67890,
       size: 14,
+      byteOffset: 512,
       mtime: new Date(1559239869000),
       type: 'file',
       linkname: null,
@@ -672,8 +675,7 @@ test('gnu-incremental', function (t) {
       gname: 'mygroup',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
@@ -737,6 +739,7 @@ test('unknown format attempts to extract if allowed', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 512,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -744,8 +747,7 @@ test('unknown format attempts to extract if allowed', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 512
+      pax: null
     })
 
     extract.on('entry', onfile2)
@@ -762,6 +764,7 @@ test('unknown format attempts to extract if allowed', function (t) {
       uid: 501,
       gid: 20,
       size: 12,
+      byteOffset: 1536,
       mtime: new Date(1387580181000),
       type: 'file',
       linkname: null,
@@ -769,8 +772,7 @@ test('unknown format attempts to extract if allowed', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null,
-      contentsByteOffset: 1536
+      pax: null
     })
 
     stream.pipe(concat(function (data) {
