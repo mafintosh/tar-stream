@@ -24,7 +24,8 @@ test('one-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     stream.pipe(concat(function (data) {
@@ -61,7 +62,8 @@ test('chunked-one-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     stream.pipe(concat(function (data) {
@@ -111,7 +113,8 @@ test('multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     extract.on('entry', onfile2)
@@ -135,7 +138,8 @@ test('multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 1536
     })
 
     stream.pipe(concat(function (data) {
@@ -178,7 +182,8 @@ test('chunked-multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     extract.on('entry', onfile2)
@@ -202,7 +207,8 @@ test('chunked-multi-file', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 1536
     })
 
     stream.pipe(concat(function (data) {
@@ -233,7 +239,8 @@ test('pax', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: { path: 'pax.txt', special: 'sauce' }
+      pax: { path: 'pax.txt', special: 'sauce' },
+      contentsByteOffset: 1536
     })
 
     stream.pipe(concat(function (data) {
@@ -337,7 +344,8 @@ test('long-name', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     stream.pipe(concat(function (data) {
@@ -374,7 +382,8 @@ test('unicode-bsd', function (t) { // can unpack a bsdtar unicoded tarball
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: { 'SCHILY.dev': '16777217', 'SCHILY.ino': '3599143', 'SCHILY.nlink': '1', atime: '1387589077', ctime: '1387588646', path: 'høllø.txt' }
+      pax: { 'SCHILY.dev': '16777217', 'SCHILY.ino': '3599143', 'SCHILY.nlink': '1', atime: '1387589077', ctime: '1387588646', path: 'høllø.txt' },
+      contentsByteOffset: 1536
     })
 
     stream.pipe(concat(function (data) {
@@ -411,7 +420,8 @@ test('unicode', function (t) { // can unpack a bsdtar unicoded tarball
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: { path: 'høstål.txt' }
+      pax: { path: 'høstål.txt' },
+      contentsByteOffset: 1536
     })
 
     stream.pipe(concat(function (data) {
@@ -528,7 +538,8 @@ test('base 256 size', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
     cb()
   })
@@ -561,7 +572,8 @@ test('latin-1', function (t) { // can unpack filenames encoded in latin-1
       gname: 'root',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     stream.pipe(concat(function (data) {
@@ -618,7 +630,8 @@ test('gnu', function (t) { // can correctly unpack gnu-tar format
       gname: 'mygroup',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     stream.pipe(concat(function (data) {
@@ -659,7 +672,8 @@ test('gnu-incremental', function (t) {
       gname: 'mygroup',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     stream.pipe(concat(function (data) {
@@ -730,7 +744,8 @@ test('unknown format attempts to extract if allowed', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 512
     })
 
     extract.on('entry', onfile2)
@@ -754,7 +769,8 @@ test('unknown format attempts to extract if allowed', function (t) {
       gname: 'staff',
       devmajor: 0,
       devminor: 0,
-      pax: null
+      pax: null,
+      contentsByteOffset: 1536
     })
 
     stream.pipe(concat(function (data) {

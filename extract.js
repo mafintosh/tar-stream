@@ -169,8 +169,9 @@ class Extract extends Writable {
 
     this._stream = this._createStream()
     this._missing = this._header.size
+    const header = { ...this._header, contentsByteOffset: this._buffer.shifted }
 
-    this.emit('entry', this._header, this._stream, this._unlockBound)
+    this.emit('entry', header, this._stream, this._unlockBound)
     return true
   }
 
