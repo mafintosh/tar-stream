@@ -28,13 +28,21 @@
     "url": "https://github.com/mafintosh/tar-stream/issues"
   },
   "homepage": "https://github.com/mafintosh/tar-stream",
+  "peerDependencies": {
+    "bare-fs": "*"
+  },
+  "peerDependenciesMeta": {
+    "bare-fs": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "b4a": "^1.6.4",
-    "bare-fs": "^4.5.5",
     "fast-fifo": "^1.2.0",
     "streamx": "^2.15.0"
   },
   "devDependencies": {
+    "bare-fs": "^4.5.5",
     "brittle": "^3.3.2",
     "concat-stream": "^2.0.0",
     "standard": "^17.0.1"
