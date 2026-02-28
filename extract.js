@@ -149,6 +149,8 @@ class Extract extends Writable {
 
     if (!this._header) return true
 
+    this._header.byteOffset = this._buffer.shifted
+
     switch (this._header.type) {
       case 'gnu-long-path':
       case 'gnu-long-link-path':
