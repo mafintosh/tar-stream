@@ -4,6 +4,7 @@ const b4a = require('b4a')
 const headers = require('./headers')
 
 const EMPTY = b4a.alloc(0)
+const MAX_HEADER_SIZE = 4 * 1024 * 1024 // arbitrary big number
 
 class BufferList {
   constructor () {
@@ -156,11 +157,20 @@ class Extract extends Writable {
       case 'pax-header':
         this._longHeader = true
         this._missing = this._header.size
+        if (this._missing > MAX_HEADER_SIZE) {
+          this._continueWrite(new Error('Header exceeds max size'))
+          return false
+        }
         return true
     }
 
     this._locked = true
     this._applyLongHeaders()
+
+    if (!(this._header.size >= 0)) {
+      this._continueWrite(new Error('Invalid header'))
+      return false
+    }
 
     if (this._header.size === 0 || this._header.type === 'directory') {
       this.emit('entry', this._header, this._createStream(), this._unlockBound)
