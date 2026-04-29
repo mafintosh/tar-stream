@@ -137,6 +137,7 @@ exports.decode = function decode (buf, filenameEncoding, allowUnknownFormat) {
     uid,
     gid,
     size,
+    byteOffset: 0,
     mtime: new Date(1000 * mtime),
     type,
     linkname,
