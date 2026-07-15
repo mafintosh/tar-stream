@@ -36,7 +36,7 @@ interface Sink extends Writable {}
 
 interface Pack extends Readable {
   entry(header: HeaderArgument, callback?: (err?: Error | null) => void): Sink
-  entry(header: HeaderArgument, buffer: string | Buffer, callback?: (err?: Error | null) => void): Sink
+  entry(header: HeaderArgument, buffer: string | Uint8Array, callback?: (err?: Error | null) => void): Sink
 
   finalize(): void
 }
