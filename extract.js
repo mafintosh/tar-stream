@@ -198,8 +198,8 @@ class Extract extends Writable {
     }
 
     if (this._pax) {
-      if (this._pax.path) this._header.name = this._pax.path
-      if (this._pax.linkpath) this._header.linkname = this._pax.linkpath
+      if (this._pax.path) this._header.name = stripNull(this._pax.path)
+      if (this._pax.linkpath) this._header.linkname = stripNull(this._pax.linkpath)
       if (this._pax.size) this._header.size = parseInt(this._pax.size, 10)
       this._header.pax = this._pax
       this._pax = null
@@ -411,6 +411,11 @@ module.exports = function extract (opts) {
 }
 
 function noop () {}
+
+function stripNull (str) {
+  const i = str.indexOf('\x00')
+  return i === -1 ? str : str.slice(0, i)
+}
 
 function overflow (size) {
   size &= 511
