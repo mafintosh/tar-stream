@@ -257,6 +257,21 @@ test('pax', function (t) {
   extract.end(fs.readFileSync(fixtures.PAX_TAR))
 })
 
+test('pax path with embedded null is truncated', function (t) {
+  t.plan(2)
+
+  const extract = tar.extract()
+
+  extract.on('entry', function (header, stream, cb) {
+    t.is(header.name, 'visible.txt')
+    t.is(header.linkname, 'link.txt')
+    stream.resume()
+    cb()
+  })
+
+  extract.end(paxWithNull('visible.txt\x00hidden.txt', 'link.txt\x00../evil'))
+})
+
 test('types', function (t) {
   t.plan(5)
 
@@ -807,4 +822,45 @@ function clamp (index, len, defaultValue) {
   index += len
   if (index >= 0) return index
   return 0
+}
+
+function paxWithNull (path, linkpath) {
+  const payload = Buffer.from(paxRecord('path=' + path) + paxRecord('linkpath=' + linkpath), 'binary')
+  return Buffer.concat([tarHeader('PaxHeader', payload.length, 120), block(payload), tarHeader('placeholder', 0, 48), Buffer.alloc(1024)])
+}
+
+function paxRecord (kv) {
+  const rec = ' ' + kv + '\n'
+  let len = rec.length + 1
+  while (String(len).length + rec.length !== len) len = String(len).length + rec.length
+  return len + rec
+}
+
+function block (buf) {
+  const rem = buf.length % 512
+  return rem === 0 ? buf : Buffer.concat([buf, Buffer.alloc(512 - rem)])
+}
+
+function tarHeader (name, size, typeflag) {
+  const buf = Buffer.alloc(512)
+  buf.write(name, 0, 'binary')
+  buf.write(octal(0o644, 6) + ' ', 100)
+  buf.write(octal(0, 6) + ' ', 108)
+  buf.write(octal(0, 6) + ' ', 116)
+  buf.write(octal(size, 11), 124)
+  buf.write(octal(0, 11) + ' ', 136)
+  buf[156] = typeflag
+  buf.write('ustar\x0000', 257, 'binary')
+  let sum = 8 * 32
+  for (let i = 0; i < 148; i++) sum += buf[i]
+  for (let j = 156; j < 512; j++) sum += buf[j]
+  buf.write(octal(sum, 6), 148)
+  buf[155] = 0x20
+  return buf
+}
+
+function octal (value, len) {
+  let s = value.toString(8)
+  while (s.length < len) s = '0' + s
+  return s
 }
