@@ -20,13 +20,19 @@ interface Header {
     | 'character-device'
     | 'fifo'
     | 'contiguous-file'
-  linkname: string
+    | 'pax-header'
+    | 'pax-global-header'
+    | 'gnu-long-link-path'
+    | 'gnu-long-path'
+    | null
+  linkname: string | null
   uid: number
   gid: number
   uname: string
   gname: string
   devmajor: number
   devminor: number
+  byteOffset: number
   pax?: unknown | null
 }
 
