@@ -32,7 +32,11 @@ interface Header {
 
 type HeaderArgument = Partial<Header> & Pick<Header, 'name'>
 
-interface Sink extends Writable {}
+interface Sink extends Writable {
+  // `pack.entry()` populates defaults before constructing the sink
+  header: HeaderArgument & Pick<Header, 'size' | 'type' | 'mode' | 'uid' | 'gid' | 'mtime'>
+  written: number
+}
 
 interface Pack extends Readable {
   entry(header: HeaderArgument, callback?: (err?: Error | null) => void): Sink
@@ -57,4 +61,14 @@ interface Extract<M extends ExtractEvents = ExtractEvents>
 
 declare function extract(opts?: WritableOptions): Extract
 
-export { pack, type Header, type Pack, extract, type Extract, type ExtractEvents }
+export {
+  pack,
+  type Header,
+  type HeaderArgument,
+  type Pack,
+  type Sink,
+  extract,
+  type Extract,
+  type ExtractEvents,
+  type Source
+}
