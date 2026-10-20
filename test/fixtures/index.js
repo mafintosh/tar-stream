@@ -3,6 +3,10 @@ const path = require('path')
 exports.ONE_FILE_TAR = path.join(__dirname, 'one-file.tar')
 exports.MULTI_FILE_TAR = path.join(__dirname, 'multi-file.tar')
 exports.PAX_TAR = path.join(__dirname, 'pax.tar')
+// Created with Python's tarfile, interleaving global and per-file PAX records.
+exports.GLOBAL_PAX_TAR = path.join(__dirname, 'global-pax.tar')
+// The same generator also writes explicit GNU long-name and long-link records.
+exports.GLOBAL_PAX_GNU_TAR = path.join(__dirname, 'global-pax-gnu.tar')
 exports.TYPES_TAR = path.join(__dirname, 'types.tar')
 exports.LONG_NAME_TAR = path.join(__dirname, 'long-name.tar')
 exports.UNICODE_BSD_TAR = path.join(__dirname, 'unicode-bsd.tar')

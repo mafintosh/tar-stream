@@ -257,6 +257,86 @@ test('pax', function (t) {
   extract.end(fs.readFileSync(fixtures.PAX_TAR))
 })
 
+for (const chunkSize of [Infinity, 321, 1]) {
+  test('global pax headers with chunk size ' + chunkSize, function (t) {
+    const global = { comment: 'first', 'VENDOR.keep': 'retained' }
+    const updated = { comment: 'second', 'VENDOR.keep': 'retained' }
+    const linked = { comment: 'third', path: 'global-name', linkpath: 'global-target' }
+    const expected = [
+      ['before.txt', 'file', null, null, 'before'],
+      ['first.txt', 'file', null, global, 'a'],
+      ['local.txt', 'file', null, { ...global, comment: 'local', 'VENDOR.local': 'only' }, 'bb'],
+      ['directory/', 'directory', null, global, ''],
+      ['updated.txt', 'file', null, updated, 'ccc'],
+      ['deleted.txt', 'file', null, { comment: 'second' }, 'dddd'],
+      ['local-empty.txt', 'file', null, { comment: '', 'VENDOR.local': 'only-empty' }, 'e'],
+      ['fallback-link', 'symlink', 'fallback-target', { comment: 'second' }, ''],
+      ['global-name', 'symlink', 'global-target', linked, ''],
+      ['local-name', 'symlink', 'local-target', { ...linked, path: 'local-name', linkpath: 'local-target' }, ''],
+      ['global-name', 'symlink', 'global-target', linked, '']
+    ]
+    const extract = tar.extract()
+    const observed = []
+    let index = 0
+    t.plan(expected.length * 2 + 3)
+
+    extract.on('entry', function (header, stream, next) {
+      const entry = expected[index++]
+      t.alike([header.name, header.type, header.linkname, header.pax], entry.slice(0, 4))
+      observed.push(header.pax)
+      if (index === 2 && header.pax) header.pax.comment = 'consumer change'
+      stream.pipe(concat(function (data) {
+        t.is(data.toString(), entry[4])
+        next()
+      }))
+    })
+
+    extract.on('finish', function () {
+      t.is(index, expected.length)
+      t.alike(observed[3], global, 'later records and consumer changes do not alter earlier headers')
+      t.alike(observed[4], updated, 'global deletion does not alter already emitted headers')
+    })
+
+    const archive = fs.readFileSync(fixtures.GLOBAL_PAX_TAR)
+    for (let offset = 0; offset < archive.length; offset += chunkSize) {
+      extract.write(archive.subarray(offset, Math.min(offset + chunkSize, archive.length)))
+    }
+    extract.end()
+  })
+}
+
+for (const chunkSize of [Infinity, 321, 1]) {
+  test('global pax and GNU per-entry precedence with chunk size ' + chunkSize, function (t) {
+    const name = 'gnu-'.repeat(30)
+    const link = 'target-'.repeat(20)
+    const expected = [
+      [name, link, null],
+      [name, link, { comment: 'global' }],
+      [name, link, { comment: 'global', path: name, linkpath: link }],
+      ['global-name', 'global-target', { comment: 'global', path: 'global-name', linkpath: 'global-target' }],
+      ['local-name', 'local-target', { comment: 'global', path: 'local-name', linkpath: 'local-target' }],
+      [name, 'global-target', { comment: 'global', path: name, linkpath: 'global-target' }],
+      ['global-name', link, { comment: 'global', path: 'global-name', linkpath: link }]
+    ]
+    const extract = tar.extract()
+    let index = 0
+    t.plan(expected.length + 1)
+
+    extract.on('entry', function (header, stream, next) {
+      t.alike([header.name, header.linkname, header.pax], expected[index++])
+      stream.on('end', next)
+      stream.resume()
+    })
+    extract.on('finish', () => t.is(index, expected.length))
+
+    const archive = fs.readFileSync(fixtures.GLOBAL_PAX_GNU_TAR)
+    for (let offset = 0; offset < archive.length; offset += chunkSize) {
+      extract.write(archive.subarray(offset, Math.min(offset + chunkSize, archive.length)))
+    }
+    extract.end()
+  })
+}
+
 test('types', function (t) {
   t.plan(5)
 
