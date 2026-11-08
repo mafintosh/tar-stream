@@ -268,3 +268,64 @@ test('backpressure', async function (t) {
 
   await end
 })
+
+test('entry with callback after finalize errors through callback', function (t) {
+  t.plan(3)
+
+  const pack = tar.pack()
+  pack.resume()
+  pack.on('error', function () {})
+
+  pack.finalize()
+
+  const entry = pack.entry({ name: 'late.txt' }, function (err) {
+    t.ok(err, 'callback received an error')
+    t.is(err.message, 'pack stream is already finalized')
+  })
+
+  t.ok(entry.destroyed !== undefined)
+})
+
+test('entry with buffer and callback after finalize errors through callback', function (t) {
+  t.plan(2)
+
+  const pack = tar.pack()
+  pack.resume()
+  pack.on('error', function () {})
+
+  pack.finalize()
+
+  pack.entry({ name: 'late.txt' }, Buffer.from('hello'), function (err) {
+    t.ok(err, 'callback received an error')
+    t.is(err.message, 'pack stream is already finalized')
+  })
+})
+
+test('entry without callback after finalize throws', function (t) {
+  t.plan(1)
+
+  const pack = tar.pack()
+  pack.resume()
+  pack.on('error', function () {})
+
+  pack.finalize()
+
+  t.exception(function () {
+    pack.entry({ name: 'late.txt' })
+  }, 'already finalized or destroyed')
+})
+
+test('entry with callback after destroy errors through callback', function (t) {
+  t.plan(2)
+
+  const pack = tar.pack()
+  pack.resume()
+  pack.on('error', function () {})
+
+  pack.destroy(new Error('stop'))
+
+  pack.entry({ name: 'late.txt' }, function (err) {
+    t.ok(err, 'callback received an error')
+    t.is(err.message, 'pack stream destroyed')
+  })
+})

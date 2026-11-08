@@ -49,8 +49,8 @@ class Sink extends Writable {
     this._openCallback = null
     if (cb === null) return
 
-    if (this._pack.destroying) return cb(new Error('pack stream destroyed'))
     if (this._pack._finalized) return cb(new Error('pack stream is already finalized'))
+    if (this._pack.destroying) return cb(new Error('pack stream destroyed'))
 
     this._pack._stream = this
 
@@ -135,11 +135,19 @@ class Pack extends Readable {
   }
 
   entry (header, buffer, callback) {
-    if (this._finalized || this.destroying) throw new Error('already finalized or destroyed')
-
     if (typeof buffer === 'function') {
       callback = buffer
       buffer = null
+    }
+
+    if (this._finalized || this.destroying) {
+      if (!callback) throw new Error('already finalized or destroyed')
+      // The sink fails to open since the pack is finalized or destroyed,
+      // which reports the error asynchronously through the callback instead
+      // of throwing here, which async callers cannot catch (see #165)
+      const sink = new Sink(this, header, callback)
+      sink.on('error', noop) // already reported through the callback
+      return sink
     }
 
     if (!callback) callback = noop
