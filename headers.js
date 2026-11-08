@@ -289,7 +289,7 @@ function parse256 (buf) {
     sum += tuple[i] * Math.pow(256, i)
   }
 
-  return positive ? sum : -1 * sum
+  return positive ? sum : -(sum + 1)
 }
 
 function decodeOct (val, offset, length) {
