@@ -268,3 +268,46 @@ test('backpressure', async function (t) {
 
   await end
 })
+
+test('mtime outside the 32-bit range', function (t) {
+  t.plan(7)
+
+  // (getTime() / 1000) | 0 used to truncate the seconds to a signed 32-bit
+  // integer: 2039 became 2242, 2106 became 1970 and some later dates
+  // produced headers no tar implementation could read.
+  const pack = tar.pack()
+
+  pack.entry({ name: 'y2039', mtime: new Date(2200000000 * 1000), mode: 0o644 }, 'a')
+  pack.entry({ name: 'y2106', mtime: new Date(4294967296 * 1000), mode: 0o644 }, 'b')
+  pack.entry({ name: 'y2242', mtime: new Date(8589934592 * 1000), mode: 0o644 }, 'c')
+  pack.entry({ name: 'y1969', mtime: new Date(-1000), mode: 0o644 }, 'd')
+
+  pack.finalize()
+
+  pack.pipe(concat(function (data) {
+    // 2200000000 still fits the 11-digit octal field
+    t.is(b4a.toString(data.subarray(136, 148), 'latin1'), (2200000000).toString(8) + ' ')
+    // 8589934592 does not: GNU base-256, 0x80 then the value big-endian
+    t.alike(data.subarray(2 * 1024 + 136, 2 * 1024 + 148), b4a.from([0x80, 0, 0, 0, 0, 0, 0, 0x02, 0, 0, 0, 0]))
+    // -1 is base-256 two's complement: 0xff followed by all ones
+    t.alike(data.subarray(3 * 1024 + 136, 3 * 1024 + 148), b4a.alloc(12, 0xff))
+
+    const extract = tar.extract()
+    const mtimes = []
+
+    extract.on('entry', function (header, stream, next) {
+      mtimes.push(header.mtime.getTime())
+      stream.resume()
+      next()
+    })
+
+    extract.on('finish', function () {
+      t.is(mtimes[0], 2200000000 * 1000)
+      t.is(mtimes[1], 4294967296 * 1000)
+      t.is(mtimes[2], 8589934592 * 1000)
+      t.is(mtimes.length, 4)
+    })
+
+    extract.end(data)
+  }))
+})
