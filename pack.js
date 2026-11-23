@@ -58,7 +58,7 @@ class Sink extends Writable {
       this._pack._encode(this.header)
     }
 
-    if (this._isVoid) {
+    if (this._isVoid && !this._isLinkname) {
       this._finish()
       this._continuePack(null)
     }

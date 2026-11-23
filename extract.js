@@ -70,6 +70,9 @@ class Source extends Readable {
     this.offset = offset
 
     this._parent = self
+
+    // errors are always forwarded to the parent, so the entry itself should never throw an unhandled one
+    this.on('error', noop)
   }
 
   _read (cb) {
@@ -114,6 +117,7 @@ class Extract extends Writable {
     this._longHeader = false
     this._callback = noop
     this._locked = false
+    this._updating = false
     this._finished = false
     this._pax = null
     this._paxGlobal = null
@@ -222,13 +226,13 @@ class Extract extends Writable {
         this._gnuLongLinkPath = headers.decodeLongPath(buf, this._filenameEncoding)
         break
       case 'pax-global-header':
-        this._paxGlobal = Object.assign({}, this._paxGlobal, headers.decodePax(buf))
+        this._paxGlobal = Object.assign({}, this._paxGlobal, validatePax(headers.decodePax(buf)))
         for (const key of Object.keys(this._paxGlobal)) {
           if (this._paxGlobal[key] === '') delete this._paxGlobal[key]
         }
         break
       case 'pax-header':
-        this._pax = headers.decodePax(buf)
+        this._pax = validatePax(headers.decodePax(buf))
         break
     }
   }
@@ -270,10 +274,18 @@ class Extract extends Writable {
   }
 
   _update () {
+    if (this._updating) return // the running update picks up any state changes
+    this._updating = true
+    const done = this._consume()
+    this._updating = false
+    if (done) this._continueWrite(null)
+  }
+
+  _consume () {
     while (this._buffer.buffered > 0 && !this.destroying) {
       if (this._missing > 0) {
         if (this._stream !== null) {
-          if (this._consumeStream() === false) return
+          if (this._consumeStream() === false) return false
           continue
         }
 
@@ -289,10 +301,10 @@ class Extract extends Writable {
       }
 
       if (this._buffer.buffered < 512) break
-      if (this._stream !== null || this._consumeHeader() === false) return
+      if (this._stream !== null || this._consumeHeader() === false) return false
     }
 
-    this._continueWrite(null)
+    return true
   }
 
   _continueWrite (err) {
@@ -419,6 +431,15 @@ module.exports = function extract (opts) {
 }
 
 function noop () {}
+
+function validatePax (pax) {
+  if (hasNull(pax.path) || hasNull(pax.linkpath)) throw new Error('Invalid tar header: pax path contains a null byte.')
+  return pax
+}
+
+function hasNull (str) {
+  return typeof str === 'string' && str.indexOf('\0') !== -1
+}
 
 function overflow (size) {
   size &= 511

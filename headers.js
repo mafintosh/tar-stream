@@ -71,7 +71,7 @@ exports.encode = function encode (opts) {
   b4a.write(buf, encodeOct(opts.uid, 6), 108)
   b4a.write(buf, encodeOct(opts.gid, 6), 116)
   encodeSize(opts.size, buf, 124)
-  b4a.write(buf, encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136)
+  encodeSize(Math.floor(opts.mtime.getTime() / 1000) || 0, buf, 136)
 
   buf[156] = ZERO_OFFSET + toTypeflag(opts.type)
 
@@ -246,7 +246,7 @@ function encodeOct (val, n) {
 }
 
 function encodeSizeBin (num, buf, off) {
-  buf[off] = 0x80
+  buf[off] = num < 0 ? 0xff : 0x80
   for (let i = 11; i > 0; i--) {
     buf[off + i] = num & 0xff
     num = Math.floor(num / 0x100)
@@ -254,7 +254,7 @@ function encodeSizeBin (num, buf, off) {
 }
 
 function encodeSize (num, buf, off) {
-  if (num.toString(8).length > 11) {
+  if (num < 0 || num.toString(8).length > 11) {
     encodeSizeBin(num, buf, off)
   } else {
     b4a.write(buf, encodeOct(num, 11), off)
@@ -289,7 +289,7 @@ function parse256 (buf) {
     sum += tuple[i] * Math.pow(256, i)
   }
 
-  return positive ? sum : -1 * sum
+  return positive ? sum : -(sum + 1)
 }
 
 function decodeOct (val, offset, length) {

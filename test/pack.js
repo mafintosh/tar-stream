@@ -268,3 +268,115 @@ test('backpressure', async function (t) {
 
   await end
 })
+
+for (const target of ['target.txt', 'høst/文件.txt', 'path/'.repeat(24) + 'target.txt']) {
+  test('streamed symlink target: ' + target, async function (t) {
+    const pack = tar.pack()
+    const output = new Promise(resolve => pack.pipe(concat(resolve)))
+    let callbacks = 0
+
+    const entry = pack.entry({ name: 'link', type: 'symlink' }, function (err) {
+      t.absent(err, 'entry completed without an error')
+      callbacks++
+    })
+
+    pack.entry({ name: 'after.txt' }, 'after')
+    pack.finalize()
+
+    const bytes = b4a.from(target)
+    entry.write(bytes.subarray(0, 2))
+    await new Promise(resolve => setImmediate(resolve))
+
+    t.is(callbacks, 0, 'entry callback waits for the complete target')
+
+    entry.end(bytes.subarray(2))
+    const data = await output
+    t.is(callbacks, 1, 'entry callback runs once')
+
+    const entries = await new Promise((resolve, reject) => {
+      const entries = []
+      const extract = tar.extract()
+      extract.on('error', reject)
+      extract.on('entry', function (header, stream, next) {
+        stream.pipe(concat(function (body) {
+          entries.push({
+            name: header.name,
+            type: header.type,
+            linkname: header.linkname,
+            size: header.size,
+            body: body.toString()
+          })
+          next()
+        }))
+      })
+      extract.on('finish', () => resolve(entries))
+      extract.end(data)
+    })
+
+    t.alike(entries, [{
+      name: 'link',
+      type: 'symlink',
+      linkname: target,
+      size: 0,
+      body: ''
+    }, {
+      name: 'after.txt',
+      type: 'file',
+      linkname: null,
+      size: 5,
+      body: 'after'
+    }], 'target and following entry round-trip in order')
+  })
+}
+
+test('destroying an unfinished streamed symlink reports the error', async function (t) {
+  const pack = tar.pack()
+  const error = new Error('target source failed')
+  const closed = new Promise(resolve => pack.on('close', resolve))
+  const completed = new Promise(resolve => {
+    const entry = pack.entry({ name: 'link', type: 'symlink' }, resolve)
+    entry.on('error', err => t.is(err, error, 'entry reports the source error'))
+    entry.write('partial')
+    setImmediate(() => entry.destroy(error))
+  })
+
+  pack.on('error', err => t.is(err, error, 'pack reports the source error'))
+  pack.resume()
+
+  t.is(await completed, error, 'callback reports failure instead of early success')
+  await closed
+})
+
+test('mtime outside the 32-bit range', function (t) {
+  t.plan(3)
+
+  const mtimes = [2200000000, 4294967296, 8589934592, -1, -2208988800]
+  const pack = tar.pack()
+
+  for (const mtime of mtimes) {
+    pack.entry({ name: 'file', mtime: new Date(mtime * 1000) }, 'a')
+  }
+
+  pack.entry({ name: 'file', mtime: new Date(NaN) }, 'a')
+  pack.finalize()
+
+  pack.pipe(concat(function (data) {
+    t.is(b4a.toString(data.subarray(136, 148)), '20310253000 ', 'octal if it fits')
+    t.alike(data.subarray(3 * 1024 + 136, 3 * 1024 + 148), b4a.alloc(12, 0xff), 'base-256 if not')
+
+    const extract = tar.extract()
+    const actual = []
+
+    extract.on('entry', function (header, stream, next) {
+      actual.push(header.mtime.getTime() / 1000)
+      stream.resume()
+      next()
+    })
+
+    extract.on('finish', function () {
+      t.alike(actual, mtimes.concat(0))
+    })
+
+    extract.end(data)
+  }))
+})

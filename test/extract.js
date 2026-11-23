@@ -337,6 +337,33 @@ for (const chunkSize of [Infinity, 321, 1]) {
   })
 }
 
+test('pax path with a null byte is rejected', function (t) {
+  t.plan(2)
+
+  run({ path: 'visible.txt\0hidden.txt' })
+  run({ linkpath: 'link.txt\0../evil' })
+
+  function run (pax) {
+    const pack = tar.pack()
+
+    pack.entry({ name: 'file.txt', pax }, 'hello')
+    pack.finalize()
+    pack.pipe(concat(function (data) {
+      const extract = tar.extract()
+
+      extract.on('entry', function () {
+        t.fail('should not emit an entry')
+      })
+
+      extract.on('error', function (err) {
+        t.ok(/null byte/.test(err.message))
+      })
+
+      extract.end(data)
+    }))
+  }
+})
+
 test('types', function (t) {
   t.plan(5)
 
@@ -877,6 +904,93 @@ test('extract streams are async iterators', async function (t) {
     t.comment('wait a bit...')
     await new Promise(resolve => setTimeout(resolve, 100))
   }
+})
+
+test('failing an entry does not emit an unhandled error on the entry stream', function (t) {
+  t.plan(1)
+
+  const extract = tar.extract()
+
+  extract.on('entry', function (header, stream, cb) {
+    cb(new Error('stop'))
+  })
+
+  extract.on('error', function (err) {
+    t.is(err.message, 'stop')
+  })
+
+  extract.end(fs.readFileSync(fixtures.ONE_FILE_TAR))
+})
+
+test('destroying while an entry is pending does not emit an unhandled error on the entry stream', function (t) {
+  t.plan(1)
+
+  const extract = tar.extract()
+
+  extract.on('entry', function (header, stream, cb) {
+    stream.on('end', cb)
+    stream.resume()
+    extract.destroy(new Error('stop'))
+  })
+
+  extract.on('error', function (err) {
+    t.is(err.message, 'stop')
+  })
+
+  extract.write(fs.readFileSync(fixtures.ONE_FILE_TAR).subarray(0, 512 + 4)) // header and a bit of the entry
+})
+
+test('entry stream errors are still emitted if listened for', function (t) {
+  t.plan(2)
+
+  const extract = tar.extract()
+
+  extract.on('entry', function (header, stream, cb) {
+    stream.on('error', function (err) {
+      t.is(err.message, 'stop')
+    })
+    cb(new Error('stop'))
+  })
+
+  extract.on('error', function (err) {
+    t.is(err.message, 'stop')
+  })
+
+  extract.end(fs.readFileSync(fixtures.ONE_FILE_TAR))
+})
+
+test('many entries in a single write with a sync callback', function (t) {
+  t.plan(2)
+
+  const pack = tar.pack()
+
+  for (let i = 0; i < 20000; i++) {
+    if (i & 1) pack.entry({ name: 'dir-' + i, type: 'directory' })
+    else pack.entry({ name: 'file-' + i }, 'hello')
+  }
+
+  pack.finalize()
+  pack.pipe(concat(function (data) {
+    const extract = tar.extract()
+    let entries = 0
+    let bytes = 0
+
+    extract.on('entry', function (header, stream, cb) {
+      stream.on('data', function (data) {
+        bytes += data.byteLength
+      })
+      stream.on('end', function () {
+        if (++entries === 20000) t.is(bytes, 10000 * 5)
+      })
+      cb()
+    })
+
+    extract.on('finish', function () {
+      t.pass()
+    })
+
+    extract.end(data)
+  }))
 })
 
 function clamp (index, len, defaultValue) {
