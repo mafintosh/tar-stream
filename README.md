@@ -79,7 +79,14 @@ The tar archive is streamed sequentially, meaning you **must** drain each entry'
 
 ## Extracting as an async iterator
 
-The extraction stream in addition to being a writable stream is also an async iterator
+The extraction stream is a writable stream and an async iterable. Use
+`for await...of` to obtain each entry, or call `extract[Symbol.asyncIterator]()`
+to obtain its async iterator. The extraction stream itself does not have a
+`next()` method.
+
+Each entry is a readable stream with a `header` property. Consume its body with
+another `for await...of` loop. To discard an entry's body, call `entry.resume()`
+instead:
 
 ``` js
 const extract = tar.extract()
@@ -87,10 +94,27 @@ const extract = tar.extract()
 someStream.pipe(extract)
 
 for await (const entry of extract) {
-  entry.header // the tar header
-  entry.resume() // the entry is the stream also
+  if (entry.header.type === 'file') {
+    for await (const chunk of entry) {
+      // Process each chunk before requesting the next one.
+      await processChunk(entry.header, chunk)
+    }
+  } else {
+    entry.resume() // discard the body of entries we do not need
+  }
 }
 ```
+
+`processChunk` above is your application's chunk handler. Each chunk is only a
+part of the body, not necessarily the entire file. The extractor reads entries
+sequentially: fully consume or drain the current entry before expecting the next
+one. The async iterator manages the entry callback; do not also install an
+`entry` event handler that calls `next()`.
+
+Breaking out of the outer loop destroys the extraction stream. Errors from the
+extractor reject iteration, so handle them around the loop as you would other
+async operations. Errors on `someStream` still need to be handled by the caller;
+`.pipe()` does not forward source errors to the extractor.
 
 ## Headers
 
