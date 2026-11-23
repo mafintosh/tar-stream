@@ -257,6 +257,33 @@ test('pax', function (t) {
   extract.end(fs.readFileSync(fixtures.PAX_TAR))
 })
 
+test('pax path with a null byte is rejected', function (t) {
+  t.plan(2)
+
+  run({ path: 'visible.txt\0hidden.txt' })
+  run({ linkpath: 'link.txt\0../evil' })
+
+  function run (pax) {
+    const pack = tar.pack()
+
+    pack.entry({ name: 'file.txt', pax }, 'hello')
+    pack.finalize()
+    pack.pipe(concat(function (data) {
+      const extract = tar.extract()
+
+      extract.on('entry', function () {
+        t.fail('should not emit an entry')
+      })
+
+      extract.on('error', function (err) {
+        t.ok(/null byte/.test(err.message))
+      })
+
+      extract.end(data)
+    }))
+  }
+})
+
 test('types', function (t) {
   t.plan(5)
 
