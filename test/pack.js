@@ -346,3 +346,37 @@ test('destroying an unfinished streamed symlink reports the error', async functi
   t.is(await completed, error, 'callback reports failure instead of early success')
   await closed
 })
+
+test('mtime outside the 32-bit range', function (t) {
+  t.plan(3)
+
+  const mtimes = [2200000000, 4294967296, 8589934592, -1, -2208988800]
+  const pack = tar.pack()
+
+  for (const mtime of mtimes) {
+    pack.entry({ name: 'file', mtime: new Date(mtime * 1000) }, 'a')
+  }
+
+  pack.entry({ name: 'file', mtime: new Date(NaN) }, 'a')
+  pack.finalize()
+
+  pack.pipe(concat(function (data) {
+    t.is(b4a.toString(data.subarray(136, 148)), '20310253000 ', 'octal if it fits')
+    t.alike(data.subarray(3 * 1024 + 136, 3 * 1024 + 148), b4a.alloc(12, 0xff), 'base-256 if not')
+
+    const extract = tar.extract()
+    const actual = []
+
+    extract.on('entry', function (header, stream, next) {
+      actual.push(header.mtime.getTime() / 1000)
+      stream.resume()
+      next()
+    })
+
+    extract.on('finish', function () {
+      t.alike(actual, mtimes.concat(0))
+    })
+
+    extract.end(data)
+  }))
+})
