@@ -191,6 +191,13 @@ class Extract extends Writable {
   }
 
   _applyLongHeaders () {
+    if (this._paxGlobal !== null) {
+      const pax = Object.assign({}, this._paxGlobal)
+      if (this._gnuLongPath && pax.path) pax.path = this._gnuLongPath
+      if (this._gnuLongLinkPath && pax.linkpath) pax.linkpath = this._gnuLongLinkPath
+      this._pax = Object.assign(pax, this._pax)
+    }
+
     if (this._gnuLongPath) {
       this._header.name = this._gnuLongPath
       this._gnuLongPath = null
@@ -219,12 +226,13 @@ class Extract extends Writable {
         this._gnuLongLinkPath = headers.decodeLongPath(buf, this._filenameEncoding)
         break
       case 'pax-global-header':
-        this._paxGlobal = validatePax(headers.decodePax(buf))
+        this._paxGlobal = Object.assign({}, this._paxGlobal, validatePax(headers.decodePax(buf)))
+        for (const key of Object.keys(this._paxGlobal)) {
+          if (this._paxGlobal[key] === '') delete this._paxGlobal[key]
+        }
         break
       case 'pax-header':
-        this._pax = this._paxGlobal === null
-          ? validatePax(headers.decodePax(buf))
-          : Object.assign({}, this._paxGlobal, validatePax(headers.decodePax(buf)))
+        this._pax = validatePax(headers.decodePax(buf))
         break
     }
   }
