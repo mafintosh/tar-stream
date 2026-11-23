@@ -70,6 +70,9 @@ class Source extends Readable {
     this.offset = offset
 
     this._parent = self
+
+    // errors are always forwarded to the parent, so the entry itself should never throw an unhandled one
+    this.on('error', noop)
   }
 
   _read (cb) {
@@ -114,6 +117,7 @@ class Extract extends Writable {
     this._longHeader = false
     this._callback = noop
     this._locked = false
+    this._updating = false
     this._finished = false
     this._pax = null
     this._paxGlobal = null
@@ -262,10 +266,18 @@ class Extract extends Writable {
   }
 
   _update () {
+    if (this._updating) return // the running update picks up any state changes
+    this._updating = true
+    const done = this._consume()
+    this._updating = false
+    if (done) this._continueWrite(null)
+  }
+
+  _consume () {
     while (this._buffer.buffered > 0 && !this.destroying) {
       if (this._missing > 0) {
         if (this._stream !== null) {
-          if (this._consumeStream() === false) return
+          if (this._consumeStream() === false) return false
           continue
         }
 
@@ -281,10 +293,10 @@ class Extract extends Writable {
       }
 
       if (this._buffer.buffered < 512) break
-      if (this._stream !== null || this._consumeHeader() === false) return
+      if (this._stream !== null || this._consumeHeader() === false) return false
     }
 
-    this._continueWrite(null)
+    return true
   }
 
   _continueWrite (err) {
