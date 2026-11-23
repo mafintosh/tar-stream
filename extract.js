@@ -219,12 +219,12 @@ class Extract extends Writable {
         this._gnuLongLinkPath = headers.decodeLongPath(buf, this._filenameEncoding)
         break
       case 'pax-global-header':
-        this._paxGlobal = headers.decodePax(buf)
+        this._paxGlobal = validatePax(headers.decodePax(buf))
         break
       case 'pax-header':
         this._pax = this._paxGlobal === null
-          ? headers.decodePax(buf)
-          : Object.assign({}, this._paxGlobal, headers.decodePax(buf))
+          ? validatePax(headers.decodePax(buf))
+          : Object.assign({}, this._paxGlobal, validatePax(headers.decodePax(buf)))
         break
     }
   }
@@ -423,6 +423,15 @@ module.exports = function extract (opts) {
 }
 
 function noop () {}
+
+function validatePax (pax) {
+  if (hasNull(pax.path) || hasNull(pax.linkpath)) throw new Error('Invalid tar header: pax path contains a null byte.')
+  return pax
+}
+
+function hasNull (str) {
+  return typeof str === 'string' && str.indexOf('\0') !== -1
+}
 
 function overflow (size) {
   size &= 511
