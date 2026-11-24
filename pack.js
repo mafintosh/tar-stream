@@ -146,7 +146,7 @@ class Pack extends Readable {
 
     if (!header.size || header.type === 'symlink') header.size = 0
     if (!header.type) header.type = modeToType(header.mode)
-    if (!header.mode) header.mode = header.type === 'directory' ? DMODE : FMODE
+    if (header.mode == null) header.mode = header.type === 'directory' ? DMODE : FMODE
     if (!header.uid) header.uid = 0
     if (!header.gid) header.gid = 0
     if (!header.mtime) header.mtime = new Date()
