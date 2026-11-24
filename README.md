@@ -174,6 +174,35 @@ yourTarball.on('close', function () {
 })
 ```
 
+## TypeScript and Node.js streams
+
+tar-stream uses streamx streams. For an API that requires a native Node.js
+`Readable` or `NodeJS.ReadableStream` (such as Dockerode's `putArchive`), adapt
+the async iterable with `Readable.from`:
+
+``` ts
+import { Readable } from 'node:stream'
+import { pack } from 'tar-stream'
+
+const archive = pack()
+archive.entry({ name: 'hello.txt' }, 'hello')
+archive.finalize()
+
+const nodeReadable = Readable.from(archive, { objectMode: false })
+// Pass nodeReadable to the Node.js stream consumer.
+```
+
+The same adapter works for extracted entry streams. Entry `data` events,
+`read()` and async iteration return `Uint8Array | string` (or `null` for an
+empty `read()`): chunks are bytes by default and become strings after
+`setEncoding()`. Narrow with `typeof chunk === 'string'` before using byte-only
+APIs. Pack chunks remain `unknown` because its mapping options can transform
+the output into arbitrary values; the Node adapter above assumes byte output.
+
+`npm run test:types` compiles strict CommonJS and ESM consumers of `npm pack`
+with the minimum and latest allowed streamx versions, then exercises the Node
+adapter and encoded entry data at runtime. CI and `prepublishOnly` run this check.
+
 ## Performance
 
 [See tar-fs for a performance comparison with node-tar](https://github.com/mafintosh/tar-fs/blob/master/README.md#performance)
