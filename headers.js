@@ -68,8 +68,8 @@ exports.encode = function encode (opts) {
 
   b4a.write(buf, name)
   b4a.write(buf, encodeOct(opts.mode & MASK, 6), 100)
-  b4a.write(buf, encodeOct(opts.uid, 6), 108)
-  b4a.write(buf, encodeOct(opts.gid, 6), 116)
+  encodeId(opts.uid, buf, 108)
+  encodeId(opts.gid, buf, 116)
   encodeSize(opts.size, buf, 124)
   encodeSize(Math.floor(opts.mtime.getTime() / 1000) || 0, buf, 136)
 
@@ -245,17 +245,25 @@ function encodeOct (val, n) {
   return ZEROS.slice(0, n - val.length) + val + ' '
 }
 
-function encodeSizeBin (num, buf, off) {
+function encodeNumberBin (num, buf, off, length) {
   buf[off] = num < 0 ? 0xff : 0x80
-  for (let i = 11; i > 0; i--) {
+  for (let i = length - 1; i > 0; i--) {
     buf[off + i] = num & 0xff
     num = Math.floor(num / 0x100)
   }
 }
 
+function encodeId (num, buf, off) {
+  if (num < 0 || num.toString(8).length > 6) {
+    encodeNumberBin(num, buf, off, 8)
+  } else {
+    b4a.write(buf, encodeOct(num, 6), off)
+  }
+}
+
 function encodeSize (num, buf, off) {
   if (num < 0 || num.toString(8).length > 11) {
-    encodeSizeBin(num, buf, off)
+    encodeNumberBin(num, buf, off, 12)
   } else {
     b4a.write(buf, encodeOct(num, 11), off)
   }
