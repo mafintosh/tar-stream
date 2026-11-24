@@ -100,7 +100,6 @@ exports.decode = function decode (buf, filenameEncoding, allowUnknownFormat) {
   const gid = decodeOct(buf, 116, 8)
   const size = decodeOct(buf, 124, 12)
   const mtime = decodeOct(buf, 136, 12)
-  const type = toType(typeflag)
   const linkname = buf[157] === 0 ? null : decodeStr(buf, 157, 100, filenameEncoding)
   const uname = decodeStr(buf, 265, 32)
   const gname = decodeStr(buf, 297, 32)
@@ -139,7 +138,7 @@ exports.decode = function decode (buf, filenameEncoding, allowUnknownFormat) {
     size,
     byteOffset: 0,
     mtime: new Date(1000 * mtime),
-    type,
+    type: toType(typeflag),
     linkname,
     uname,
     gname,
