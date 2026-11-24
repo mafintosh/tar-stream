@@ -79,8 +79,8 @@ exports.encode = function encode (opts) {
 
   b4a.copy(USTAR_MAGIC, buf, MAGIC_OFFSET)
   b4a.copy(USTAR_VER, buf, VERSION_OFFSET)
-  if (opts.uname) b4a.write(buf, opts.uname, 265)
-  if (opts.gname) b4a.write(buf, opts.gname, 297)
+  if (opts.uname) b4a.write(buf, opts.uname, 265, 32)
+  if (opts.gname) b4a.write(buf, opts.gname, 297, 32)
   b4a.write(buf, encodeOct(opts.devmajor || 0, 6), 329)
   b4a.write(buf, encodeOct(opts.devminor || 0, 6), 337)
 
