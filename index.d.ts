@@ -1,6 +1,7 @@
 import {
   Readable,
   Writable,
+  type ReadableEvents,
   type ReadableOptions,
   type WritableEvents,
   type WritableOptions
@@ -43,9 +44,16 @@ interface Pack extends Readable {
 
 declare function pack(opts?: ReadableOptions): Pack
 
-interface Source extends Readable {
+interface SourceEvents extends ReadableEvents {
+  data: [data: Uint8Array | string]
+}
+
+interface Source extends Readable<SourceEvents> {
   header: Header
   offset: number
+
+  read(): Uint8Array | string | null
+  [Symbol.asyncIterator](): AsyncIterableIterator<Uint8Array | string>
 }
 
 interface ExtractEvents extends WritableEvents {
