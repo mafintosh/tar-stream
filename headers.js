@@ -53,7 +53,6 @@ exports.encode = function encode (opts) {
   let name = opts.name
   let prefix = ''
 
-  if (opts.typeflag === 5 && name[name.length - 1] !== '/') name += '/'
   if (b4a.byteLength(name) !== name.length) return null // utf-8
 
   while (b4a.byteLength(name) > 100) {
