@@ -329,6 +329,68 @@ for (const target of ['target.txt', 'høst/文件.txt', 'path/'.repeat(24) + 'ta
   })
 }
 
+for (const target of ['target.txt', 'høst/文件.txt', 'path/'.repeat(24) + 'target.txt']) {
+  for (const body of [target, b4a.from(target)]) {
+    test('buffered symlink target (' + typeof body + '): ' + target, async function (t) {
+      const pack = tar.pack()
+      const output = new Promise((resolve, reject) => {
+        pack.on('error', reject)
+        pack.pipe(concat(resolve))
+      })
+      let callbacks = 0
+
+      const entry = pack.entry({ name: 'link', type: 'symlink' }, body, function (err) {
+        t.absent(err, 'entry completed without an error')
+        callbacks++
+      })
+      entry.on('error', () => {})
+      pack.entry({ name: 'after.txt' }, 'after').on('error', () => {})
+      pack.finalize()
+
+      const data = await output.catch(err => {
+        t.fail(err.message)
+        return null
+      })
+      if (data === null) return
+      t.is(callbacks, 1, 'entry callback runs once')
+
+      const entries = await new Promise((resolve, reject) => {
+        const entries = []
+        const extract = tar.extract()
+        extract.on('error', reject)
+        extract.on('entry', function (header, stream, next) {
+          stream.pipe(concat(function (body) {
+            entries.push({
+              name: header.name,
+              type: header.type,
+              linkname: header.linkname,
+              size: header.size,
+              body: body.toString()
+            })
+            next()
+          }))
+        })
+        extract.on('finish', () => resolve(entries))
+        extract.end(data)
+      })
+
+      t.alike(entries, [{
+        name: 'link',
+        type: 'symlink',
+        linkname: target,
+        size: 0,
+        body: ''
+      }, {
+        name: 'after.txt',
+        type: 'file',
+        linkname: null,
+        size: 5,
+        body: 'after'
+      }], 'target and following entry round-trip in order')
+    })
+  }
+}
+
 test('destroying an unfinished streamed symlink reports the error', async function (t) {
   const pack = tar.pack()
   const error = new Error('target source failed')

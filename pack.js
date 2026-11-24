@@ -156,7 +156,7 @@ class Pack extends Readable {
     const sink = new Sink(this, header, callback)
 
     if (b4a.isBuffer(buffer)) {
-      header.size = buffer.byteLength
+      if (!sink._isLinkname) header.size = buffer.byteLength
       sink.write(buffer)
       sink.end()
       return sink
