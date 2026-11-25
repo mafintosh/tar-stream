@@ -76,7 +76,7 @@ class Source extends Readable {
   }
 
   _read (cb) {
-    if (this.header.size === 0) {
+    if (this.header.size === 0 || this.header.type === 'directory') {
       this.push(null)
     }
     if (this._parent._stream === this) {
