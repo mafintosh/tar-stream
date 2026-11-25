@@ -24,7 +24,7 @@ class Sink extends Writable {
     this._pack = pack
     this._openCallback = null
 
-    if (this._pack._stream === null) this._pack._stream = this
+    if (this._pack._stream === null && this._pack._pending.length === 0) this._pack._stream = this
     else this._pack._pending.push(this)
   }
 
@@ -130,6 +130,7 @@ class Pack extends Readable {
     this._drain = noop
     this._finalized = false
     this._finalizing = false
+    this._draining = false
     this._pending = []
     this._stream = null
   }
@@ -188,7 +189,13 @@ class Pack extends Readable {
     this._stream = null
 
     if (this._finalizing) this.finalize()
-    if (this._pending.length) this._pending.shift()._continueOpen()
+    if (this._draining) return
+
+    this._draining = true
+    while (this._stream === null && this._pending.length > 0) {
+      this._pending.shift()._continueOpen()
+    }
+    this._draining = false
   }
 
   _encode (header) {
