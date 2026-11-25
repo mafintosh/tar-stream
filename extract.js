@@ -330,6 +330,7 @@ class Extract extends Writable {
 
     let promiseResolve = null
     let promiseReject = null
+    const pending = new FIFO()
 
     let entryStream = null
     let entryCallback = null
@@ -367,6 +368,11 @@ class Extract extends Writable {
         return reject(error)
       }
 
+      if (promiseResolve) {
+        pending.push({ resolve, reject })
+        return
+      }
+
       if (entryStream) {
         resolve({ value: entryStream, done: false })
         entryStream = null
@@ -391,6 +397,10 @@ class Extract extends Writable {
       if (promiseResolve) {
         promiseResolve({ value: stream, done: false })
         promiseResolve = promiseReject = null
+        if (pending.length > 0) {
+          const { resolve, reject } = pending.shift()
+          onnext(resolve, reject)
+        }
       } else {
         entryStream = stream
       }
@@ -398,10 +408,16 @@ class Extract extends Writable {
 
     function onclose () {
       consumeCallback(error)
-      if (!promiseResolve) return
-      if (error) promiseReject(error)
-      else promiseResolve({ value: undefined, done: true })
+      if (promiseResolve) {
+        if (error) promiseReject(error)
+        else promiseResolve({ value: undefined, done: true })
+      }
       promiseResolve = promiseReject = null
+      while (pending.length > 0) {
+        const { resolve, reject } = pending.shift()
+        if (error) reject(error)
+        else resolve({ value: undefined, done: true })
+      }
     }
 
     function destroy (err) {
