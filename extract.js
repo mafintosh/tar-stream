@@ -205,6 +205,11 @@ class Extract extends Writable {
       if (this._pax.path) this._header.name = this._pax.path
       if (this._pax.linkpath) this._header.linkname = this._pax.linkpath
       if (this._pax.size) this._header.size = parseInt(this._pax.size, 10)
+      if (this._pax.uid) this._header.uid = parseInt(this._pax.uid, 10)
+      if (this._pax.gid) this._header.gid = parseInt(this._pax.gid, 10)
+      if (this._pax.uname) this._header.uname = this._pax.uname
+      if (this._pax.gname) this._header.gname = this._pax.gname
+      if (this._pax.mtime) this._header.mtime = new Date(Number(this._pax.mtime) * 1000)
       this._header.pax = this._pax
       this._pax = null
     }
