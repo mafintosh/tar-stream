@@ -59,8 +59,13 @@ exports.encode = function encode (opts) {
   while (b4a.byteLength(name) > 100) {
     const i = name.indexOf('/')
     if (i === -1) return null
-    prefix += prefix ? '/' + name.slice(0, i) : name.slice(0, i)
+    prefix += name.slice(0, i + 1)
     name = name.slice(i + 1)
+  }
+
+  if (prefix) {
+    prefix = prefix.slice(0, -1)
+    if (!prefix) return null
   }
 
   if (b4a.byteLength(name) > 100 || b4a.byteLength(prefix) > 155) return null
