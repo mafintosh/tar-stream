@@ -326,7 +326,8 @@ class Extract extends Writable {
   }
 
   [Symbol.asyncIterator] () {
-    let error = null
+    let error = getStreamError(this)
+    let closed = this.destroyed
 
     let promiseResolve = null
     let promiseReject = null
@@ -367,6 +368,10 @@ class Extract extends Writable {
         return reject(error)
       }
 
+      if (closed) {
+        return resolve({ value: undefined, done: true })
+      }
+
       if (entryStream) {
         resolve({ value: entryStream, done: false })
         entryStream = null
@@ -397,6 +402,7 @@ class Extract extends Writable {
     }
 
     function onclose () {
+      closed = true
       consumeCallback(error)
       if (!promiseResolve) return
       if (error) promiseReject(error)
