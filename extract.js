@@ -119,6 +119,8 @@ class Extract extends Writable {
     this._locked = false
     this._updating = false
     this._finished = false
+    this._strict = !!opts.strict
+    this._ended = 0
     this._pax = null
     this._paxGlobal = null
     this._gnuLongPath = null
@@ -145,14 +147,30 @@ class Extract extends Writable {
 
     this._offset = this._buffer.shifted
 
+    const buf = this._buffer.shift(512)
+
     try {
-      this._header = headers.decode(this._buffer.shift(512), this._filenameEncoding, this._allowUnknownFormat)
+      this._header = headers.decode(buf, this._filenameEncoding, this._allowUnknownFormat)
     } catch (err) {
       this._continueWrite(err)
       return false
     }
 
-    if (!this._header) return true
+    if (!this._header) {
+      if (this._strict) {
+        if (!isZero(buf) || this._pax !== null || this._gnuLongPath !== null || this._gnuLongLinkPath !== null) {
+          this._continueWrite(new Error('Invalid tar end of archive'))
+          return false
+        }
+        this._ended++
+      }
+      return true
+    }
+
+    if (this._ended > 0) {
+      this._continueWrite(new Error('Unexpected data after end of archive'))
+      return false
+    }
 
     this._header.byteOffset = this._buffer.shifted
 
@@ -288,7 +306,13 @@ class Extract extends Writable {
         }
 
         const ignore = this._buffer.shiftFirst(this._missing)
-        if (ignore !== null) this._missing -= ignore.byteLength
+        if (ignore !== null) {
+          if (this._strict && !isZero(ignore)) {
+            this._continueWrite(new Error('Invalid tar padding'))
+            return false
+          }
+          this._missing -= ignore.byteLength
+        }
         continue
       }
 
@@ -312,7 +336,7 @@ class Extract extends Writable {
   }
 
   _final (cb) {
-    this._finished = this._missing === 0 && this._buffer.buffered === 0
+    this._finished = this._missing === 0 && this._buffer.buffered === 0 && (!this._strict || this._ended >= 2)
     cb(this._finished ? null : new Error('Unexpected end of data'))
   }
 
@@ -431,6 +455,13 @@ function validatePax (pax) {
 
 function hasNull (str) {
   return typeof str === 'string' && str.indexOf('\0') !== -1
+}
+
+function isZero (buf) {
+  for (let i = 0; i < buf.byteLength; i++) {
+    if (buf[i] !== 0) return false
+  }
+  return true
 }
 
 function overflow (size) {
