@@ -77,6 +77,8 @@ pack.pipe(extract)
 
 The tar archive is streamed sequentially, meaning you **must** drain each entry's stream as you get them or else the main extract stream will receive backpressure and stop reading.
 
+PAX and GNU long name headers are buffered in memory before the entry they apply to. Pass `tar.extract({ maxHeaderSize })` to limit their size in bytes (defaults to 4 MiB) when extracting untrusted input.
+
 ## Extracting as an async iterator
 
 The extraction stream in addition to being a writable stream is also an async iterator
