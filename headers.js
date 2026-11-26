@@ -31,15 +31,15 @@ exports.encodePax = function encodePax (opts) { // TODO: encode more stuff in pa
 exports.decodePax = function decodePax (buf) {
   const result = {}
 
-  while (buf.length) {
+  while (buf.length && buf[0] !== 0) { // tolerate trailing nul padding
     let i = 0
     while (i < buf.length && buf[i] !== 32) i++
     const len = parseInt(b4a.toString(buf.subarray(0, i)), 10)
-    if (!len) return result
+    if (!(len > i + 1 && len <= buf.length && buf[len - 1] === 10)) throw new Error('Invalid tar header: malformed pax record.')
 
     const b = b4a.toString(buf.subarray(i + 1, len - 1))
     const keyIndex = b.indexOf('=')
-    if (keyIndex === -1) return result
+    if (keyIndex === -1) throw new Error('Invalid tar header: malformed pax record.')
     result[b.slice(0, keyIndex)] = b.slice(keyIndex + 1)
 
     buf = buf.subarray(len)
