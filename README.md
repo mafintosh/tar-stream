@@ -75,6 +75,8 @@ extract.on('finish', function () {
 pack.pipe(extract)
 ```
 
+By default the extractor is lenient about archive framing. Pass `tar.extract({ strict: true })` to reject nonzero padding, archives that end without the two zero end blocks, and data after them.
+
 The tar archive is streamed sequentially, meaning you **must** drain each entry's stream as you get them or else the main extract stream will receive backpressure and stop reading.
 
 ## Extracting as an async iterator
