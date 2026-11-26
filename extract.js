@@ -125,6 +125,7 @@ class Extract extends Writable {
     this._gnuLongLinkPath = null
     this._filenameEncoding = opts.filenameEncoding || 'utf-8'
     this._allowUnknownFormat = !!opts.allowUnknownFormat
+    this._maxHeaderSize = opts.maxHeaderSize || MAX_HEADER_SIZE
     this._unlockBound = this._unlock.bind(this)
   }
 
@@ -163,7 +164,7 @@ class Extract extends Writable {
       case 'pax-header':
         this._longHeader = true
         this._missing = this._header.size
-        if (this._missing > MAX_HEADER_SIZE) {
+        if (this._missing > this._maxHeaderSize) {
           this._continueWrite(new Error('Header exceeds max size'))
           return false
         }
